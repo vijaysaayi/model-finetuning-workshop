@@ -1,4 +1,4 @@
-# Model Fine-Tuning Workshop: Training a Custom AI Assistant for Axiomcart
+# Training a Custom AI Assistant for Axiomcart
 
 Welcome to the Model Fine-Tuning Workshop! In this hands-on workshop, you'll learn how to fine-tune a language model to create a custom AI assistant for customer support using the Qwen2-0.5B model and LoRA (Low-Rank Adaptation) technique.
 

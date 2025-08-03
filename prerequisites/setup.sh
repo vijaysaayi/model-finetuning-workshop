@@ -331,8 +331,8 @@ python -m pip install --upgrade pip
 print_info "Installing workshop packages from requirements.txt..."
 print_info "Progress will be shown below (this may take several minutes):"
 
-if [ -f "requirements.txt" ]; then
-    if pip install -r requirements.txt; then
+if [ -f "prerequisites/requirements.txt" ]; then
+    if pip install -r prerequisites/requirements.txt; then
         print_success "All workshop dependencies installed successfully"
     else
         print_error "Failed to install workshop dependencies"
@@ -345,7 +345,7 @@ if [ -f "requirements.txt" ]; then
         exit 1
     fi
 else
-    print_error "requirements.txt not found in workshop directory"
+    print_error "requirements.txt not found in prerequisites directory"
     print_support "Make sure you're running this from the correct workshop folder"
     exit 1
 fi

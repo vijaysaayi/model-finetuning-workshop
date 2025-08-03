@@ -175,10 +175,6 @@ datasets/
 *.parquet
 *.arrow
 
-# VS Code
-.vscode/
-*.code-workspace
-
 # Jupyter Lab
 .jupyter/
 

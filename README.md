@@ -1,110 +1,60 @@
 # Training a Custom AI Assistant for Axiomcart
 
-Welcome to the Model Fine-Tuning Workshop! In this hands-on workshop, you'll learn how to fine-tune a language model to create a custom AI assistant for customer support using the Qwen2-0.5B model and LoRA (Low-Rank Adaptation) technique.
+Welcome to the Model Fine-Tuning Hands-on!
 
-## 🎯 What You'll Learn
+In this hands-on workshop, you'll learn how to fine-tune a language model to create a custom AI assistant for customer support using the Qwen2-0.5B model and LoRA (Low-Rank Adaptation) technique.
 
-- How to load and use a pre-trained language model
-- How to prepare training data for fine-tuning
-- How to implement LoRA for efficient fine-tuning
-- How to compare base model vs fine-tuned model performance
-- Best practices for CPU-based model training
+## 🎯 What You'll Learn how to
+
+- Load and use a pre-trained language model
+- Prepare training data for fine-tuning
+- Implement LoRA for efficient fine-tuning
+- Compare base model vs fine-tuned model performance
 
 ## 🛠️ Setup Instructions
 
-### Step 1: Install Python
+### Automated Setup (One-Click Installation)
 
-1. **Download Python 3.8 or higher** from [python.org](https://www.python.org/downloads/)
-   - Choose the latest stable version (Python 3.11+ recommended)
-   - During installation on Windows, make sure to check "Add Python to PATH"
+The workshop includes automated setup scripts that handle everything for you:
 
-2. **Verify Python installation**:
+**For Windows**:
 
-   ```bash
-   python --version
-   # or
-   python3 --version
-   ```
-
-3. **Upgrade pip** (Python package manager):
-
-   ```bash
-   python -m pip install --upgrade pip
-   ```
-
-### Step 2: Install Visual Studio Code
-
-1. **Download VS Code** from [code.visualstudio.com](https://code.visualstudio.com/)
-2. **Install VS Code** following the installation wizard for your operating system
-
-### Step 3: Install Required VS Code Extensions
-
-Open VS Code and install these essential extensions:
-
-1. **Python Extension**:
-   - Open VS Code
-   - Press `Ctrl+Shift+X` (or `Cmd+Shift+X` on Mac) to open Extensions
-   - Search for "Python" by Microsoft
-   - Click "Install"
-
-2. **Jupyter Extension**:
-   - Search for "Jupyter" by Microsoft
-   - Click "Install"
-   - This extension enables Jupyter notebook support in VS Code
-
-### Step 4: Clone or Download the Workshop Repository
-
-```bash
-# Option 1: Clone with Git
-git clone https://github.com/vijaysaayi/model-finetuning-workshop.git
-cd model-finetuning-workshop
-
-# Option 2: Download ZIP
-# Download the ZIP file from GitHub and extract it
+```powershell
+.\prerequisites\setup.ps1
 ```
 
-### Step 5: Set Up Python Environment
+**For Linux/macOS**:
 
-1. **Open the project in VS Code**:
+```bash
+chmod +x prerequisites/setup.sh
+./prerequisites/setup.sh
+```
 
-   ```bash
-   code model-finetuning-workshop
-   ```
+These scripts will automatically:
 
-2. **Create a virtual environment** (recommended):
+- ✅ Install Python 3.11+ (if not already installed)
+- ✅ Install VS Code (if not already installed) 
+- ✅ Install required VS Code extensions (Python, Jupyter)
+- ✅ Create a virtual environment (`.venv`)
+- ✅ Install all Python dependencies including `hf_transfer` for faster downloads
+- ✅ Verify the installation
 
-   ```bash
-   python -m venv venv
-   
-   # Activate on Windows
-   venv\Scripts\activate
-   
-   # Activate on macOS/Linux
-   source venv/bin/activate
-   ```
+> **🚀 Performance Boost**: The setup includes `hf_transfer` which provides **2-5x faster model downloads** from Hugging Face Hub using Rust-based acceleration!
 
-3. **Install required packages**:
+### Getting Started
 
-   **Recommended**: Use the provided `requirements.txt` file:
+1. **Download/Clone this repository**
+2. **Open PowerShell/Terminal** in the project folder
+3. **Run the setup script** for your platform (commands above)
+4. **Open VS Code** and navigate to `workshop/model-finetuning-handson.ipynb`
+5. **Select the Python interpreter** from `.venv` when prompted
+6. **Start the workshop!** 🎉
 
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Step 6: Configure VS Code for Jupyter
-
-1. **Open the notebook**: Click on `model-finetune.ipynb` in VS Code
-2. **Select Python interpreter**:
-   - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
-   - Type "Python: Select Interpreter"
-   - Choose the Python interpreter from your virtual environment
-3. **Select Jupyter kernel**:
-   - When you open the notebook, VS Code will prompt you to select a kernel
-   - Choose the Python interpreter from your virtual environment
+That's it! The automated setup handles all the complexity for you.
 
 ## 🚀 Running the Workshop
 
-1. **Open** `model-finetune.ipynb` in VS Code
+1. **Open** `workshop/model-finetuning-handson.ipynb` in VS Code
 2. **Run cells sequentially**:
    - Click the "Run" button (▶️) next to each cell
    - Or use `Shift+Enter` to run the current cell and move to the next
@@ -133,15 +83,38 @@ The workshop is structured into 11 main steps:
 
 ## 🔧 Troubleshooting
 
-### Common Issues and Solutions
+### If Setup Script Fails
 
-#### Issue: Slow training
+#### Issue: PowerShell execution policy error (Windows)
 
 **Solution**:
 
-- Reduce `num_train_epochs` for faster training
-- Reduce dataset size for testing
-- Ensure no other heavy applications are running
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then run the setup script again.
+
+#### Issue: Permission denied (Linux/macOS)
+
+**Solution**:
+
+```bash
+chmod +x prerequisites/setup.sh
+sudo ./prerequisites/setup.sh
+```
+
+#### Issue: General setup failure
+
+**Solutions to try**:
+
+- Check internet connection (required for downloads)
+- Run as Administrator (Windows) or with sudo (Linux/macOS)
+- Ensure you have at least 3GB of free disk space
+- Restart your computer and try again
+- Check Windows Defender or antivirus isn't blocking the installation
+
+> **💡 Tip**: If you encounter issues, please share the complete error output for faster troubleshooting assistance.
 
 ## 📊 Expected Results
 

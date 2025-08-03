@@ -79,16 +79,18 @@ try {
     
     # Fix RAM calculation
     if ($os.TotalPhysicalMemory -and $os.TotalPhysicalMemory -gt 0) {
-        $ramGB = [math]::Round($os.TotalPhysicalMemory/1GB, 1)
+        $ramGB = [math]::Round($os.TotalPhysicalMemory / 1GB, 1)
         Write-Info "RAM: $ramGB GB"
-    } else {
+    }
+    else {
         # Fallback method for RAM detection
         try {
             $ram = Get-WmiObject -Class Win32_ComputerSystem | Select-Object TotalPhysicalMemory
             if ($ram.TotalPhysicalMemory -gt 0) {
-                $ramGB = [math]::Round($ram.TotalPhysicalMemory/1GB, 1)
+                $ramGB = [math]::Round($ram.TotalPhysicalMemory / 1GB, 1)
                 Write-Info "RAM: $ramGB GB"
-            } else {
+            }
+            else {
                 Write-Info "RAM: Unable to detect"
             }
         }
@@ -113,7 +115,8 @@ Write-Info "Current execution policy: $currentPolicy"
 if ($currentPolicy -eq "Restricted" -or $currentPolicy -eq "Undefined") {
     if ($currentPolicy -eq "Undefined") {
         Write-Info "Execution policy is undefined, setting for current user..."
-    } else {
+    }
+    else {
         Write-Warning "PowerShell execution policy is restricted."
     }
     Write-Info "Attempting to allow script execution for current user..."
@@ -136,7 +139,8 @@ try {
     $wingetVersion = winget --version 2>$null
     if ($LASTEXITCODE -eq 0) {
         Write-Success "winget is available: $wingetVersion"
-    } else {
+    }
+    else {
         throw "winget not found"
     }
 }
@@ -167,11 +171,13 @@ try {
                 Write-Warning "Python version is too old (need 3.8+)"
                 Write-Info "Installing Python 3.11..."
                 winget install Python.Python.3.11 --accept-source-agreements --accept-package-agreements --scope user
-            } else {
+            }
+            else {
                 Write-Success "Python version is compatible"
             }
         }
-    } else {
+    }
+    else {
         throw "Python not found"
     }
 }
@@ -186,17 +192,19 @@ catch {
             Write-Success "Python installation completed"
             
             # Refresh PATH
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
             
             # Test Python
             Start-Sleep 3
             $pythonVersion = python --version 2>$null
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "Python verified: $pythonVersion"
-            } else {
+            }
+            else {
                 Write-Warning "Python installed but not accessible. You may need to restart PowerShell."
             }
-        } else {
+        }
+        else {
             throw "winget install failed"
         }
     }
@@ -219,7 +227,8 @@ try {
     if ($LASTEXITCODE -eq 0) {
         Write-Success "VS Code already installed"
         Write-Info "Version: $($codeVersion[0])"
-    } else {
+    }
+    else {
         throw "VS Code not found"
     }
 }
@@ -234,18 +243,20 @@ catch {
             Write-Success "VS Code installation completed"
             
             # Refresh PATH
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
             
             # Test VS Code
             Start-Sleep 3
             $codeVersion = code --version 2>$null
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "VS Code verified"
-            } else {
+            }
+            else {
                 Write-Warning "VS Code installed but not accessible via command line"
                 Write-Info "This is normal - you can still use VS Code from Start Menu"
             }
-        } else {
+        }
+        else {
             throw "winget install failed"
         }
     }
@@ -263,8 +274,8 @@ Write-Info "Installing Python and Jupyter extensions for optimal workshop experi
 
 # Required extensions for the workshop
 $requiredExtensions = @(
-    @{id="ms-python.python"; name="Python"},
-    @{id="ms-toolsai.jupyter"; name="Jupyter"}
+    @{id = "ms-python.python"; name = "Python" },
+    @{id = "ms-toolsai.jupyter"; name = "Jupyter" }
 )
 
 foreach ($extension in $requiredExtensions) {
@@ -276,13 +287,15 @@ foreach ($extension in $requiredExtensions) {
         
         if ($LASTEXITCODE -eq 0 -and $extensionList -contains $extension.id) {
             Write-Success "$($extension.name) extension already installed"
-        } else {
+        }
+        else {
             Write-Info "Installing $($extension.name) extension..."
             code --install-extension $extension.id --force 2>$null
             
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "$($extension.name) extension installed successfully"
-            } else {
+            }
+            else {
                 Write-Warning "Failed to install $($extension.name) extension"
                 Write-Info "You can manually install from VS Code Extensions tab"
             }
@@ -313,7 +326,8 @@ try {
     
     if (Test-Path ".venv\Scripts\Activate.ps1") {
         Write-Success "Virtual environment created successfully"
-    } else {
+    }
+    else {
         throw "Virtual environment creation failed"
     }
 }
@@ -357,13 +371,14 @@ catch {
 Write-Info "Installing workshop packages from requirements.txt..."
 Write-Info "Progress will be shown below (this may take several minutes):"
 
-if (Test-Path "requirements.txt") {
+if (Test-Path "prerequisites\requirements.txt") {
     try {
-        pip install -r requirements.txt
+        pip install -r prerequisites\requirements.txt
         
         if ($LASTEXITCODE -eq 0) {
             Write-Success "All workshop dependencies installed successfully"
-        } else {
+        }
+        else {
             throw "pip install failed with exit code $LASTEXITCODE"
         }
     }
@@ -377,8 +392,9 @@ if (Test-Path "requirements.txt") {
         Read-Host "Press Enter to exit"
         exit 1
     }
-} else {
-    Write-Error "requirements.txt not found in workshop directory"
+}
+else {
+    Write-Error "requirements.txt not found in prerequisites directory"
     Write-Support "Make sure you're running this from the correct workshop folder"
     Read-Host "Press Enter to exit"
     exit 1
@@ -396,7 +412,8 @@ foreach ($package in $packages) {
         $version = python -c "import $package; print($package.__version__)" 2>$null
         if ($LASTEXITCODE -eq 0) {
             Write-Success "$package $version"
-        } else {
+        }
+        else {
             $failed += $package
             Write-Error "$package import failed"
         }
@@ -409,7 +426,8 @@ foreach ($package in $packages) {
 
 if ($failed.Count -eq 0) {
     Write-Success "All packages verified successfully!"
-} else {
+}
+else {
     Write-Error "Package verification failed for: $($failed -join ', ')"
     Write-Support "Copy this error and contact workshop organizers"
 }
@@ -492,7 +510,8 @@ print("Model verification complete.")
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Model pre-download completed successfully!"
             Write-Info "Model is now cached and ready for instant loading during workshop"
-        } else {
+        }
+        else {
             Write-Warning "Model download/verification had issues but workshop can still proceed"
             Write-Info "Model will be downloaded during the workshop session instead"
         }
@@ -506,7 +525,8 @@ print("Model verification complete.")
         Write-Info "This is not critical - model will download during workshop instead"
         Write-Info "Ensure you have stable internet during the workshop session"
     }
-} else {
+}
+else {
     Write-Warning "Skipping model download due to package verification failures"
 }
 
@@ -521,7 +541,8 @@ try {
     
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Jupyter kernel registered successfully"
-    } else {
+    }
+    else {
         Write-Warning "Jupyter kernel registration had issues but continuing..."
     }
 }
@@ -541,12 +562,12 @@ try {
     
     # Create settings.json for optimal VS Code experience
     $vscodeSettings = @{
-        "python.defaultInterpreterPath" = "${workspaceFolder}\\.venv\\Scripts\\python.exe"
-        "jupyter.jupyterServerType" = "local"
+        "python.defaultInterpreterPath"       = "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+        "jupyter.jupyterServerType"           = "local"
         "python.terminal.activateEnvironment" = $true
-        "jupyter.defaultKernel" = ".venv"
-        "python.linting.enabled" = $false
-        "python.formatting.provider" = "none"
+        "jupyter.defaultKernel"               = ".venv"
+        "python.linting.enabled"              = $false
+        "python.formatting.provider"          = "none"
     }
     
     $settingsJson = $vscodeSettings | ConvertTo-Json -Depth 10
@@ -588,7 +609,8 @@ Total download: 3GB (packages + model)
 
 NOTE: The model is now cached locally - loading will be instant during the workshop!
 "@ -ForegroundColor Green
-} else {
+}
+else {
     Write-Host @"
 
 [!] Setup completed with some issues.

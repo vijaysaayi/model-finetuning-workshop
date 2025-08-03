@@ -36,10 +36,10 @@ These scripts will automatically:
 - ✅ Install VS Code (if not already installed) 
 - ✅ Install required VS Code extensions (Python, Jupyter)
 - ✅ Create a virtual environment (`.venv`)
-- ✅ Install all Python dependencies including `hf_transfer` for faster downloads
+- ✅ Install all Python dependencies including `hf_transfer` and `hf_xet` for maximum download speed
 - ✅ Verify the installation
 
-> **🚀 Performance Boost**: The setup includes `hf_transfer` which provides **2-5x faster model downloads** from Hugging Face Hub using Rust-based acceleration!
+> **🚀 Performance Boost**: The setup includes both `hf_transfer` and `hf_xet` which provide **up to 10x faster model downloads** from Hugging Face Hub using Rust-based acceleration and Xet Storage optimization!
 
 ### Getting Started
 

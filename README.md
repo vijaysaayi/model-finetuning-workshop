@@ -13,9 +13,7 @@ In this hands-on workshop, you'll learn how to fine-tune a language model to cre
 
 ## 🛠️ Setup Instructions
 
-### Automated Setup (One-Click Installation)
-
-The workshop includes automated setup scripts that handle everything for you:
+Run the following script to install all tools needed for the workshop.
 
 **For Windows**:
 
@@ -32,14 +30,13 @@ chmod +x prerequisites/setup.sh
 
 These scripts will automatically:
 
-- ✅ Install Python 3.11+ (if not already installed)
-- ✅ Install VS Code (if not already installed) 
+- ✅ Install Python (if not already installed).
+- ✅ Install VS Code (if not already installed).
 - ✅ Install required VS Code extensions (Python, Jupyter)
 - ✅ Create a virtual environment (`.venv`)
-- ✅ Install all Python dependencies including `hf_transfer` and `hf_xet` for maximum download speed
+- ✅ Install all Python dependencies.
+- ✅ Downloads `Qwen2 0.5B` SLM which we will be using.
 - ✅ Verify the installation
-
-> **🚀 Performance Boost**: The setup includes both `hf_transfer` and `hf_xet` which provide **up to 10x faster model downloads** from Hugging Face Hub using Rust-based acceleration and Xet Storage optimization!
 
 ### Getting Started
 
@@ -109,7 +106,6 @@ sudo ./prerequisites/setup.sh
 **Solutions to try**:
 
 - Check internet connection (required for downloads)
-- Run as Administrator (Windows) or with sudo (Linux/macOS)
 - Ensure you have at least 3GB of free disk space
 - Restart your computer and try again
 - Check Windows Defender or antivirus isn't blocking the installation

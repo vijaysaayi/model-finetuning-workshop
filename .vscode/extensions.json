@@ -2,9 +2,5 @@
     "recommendations": [
         "ms-python.python",
         "ms-toolsai.jupyter",
-        "ms-python.black-formatter",
-        "ms-python.flake8",
-        "ms-vscode.vscode-json",
-        "redhat.vscode-yaml"
     ]
 }

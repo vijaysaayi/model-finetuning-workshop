@@ -62,14 +62,14 @@ Write-Host @"
 ================================================================
 
 This will install Python, VS Code, and workshop dependencies.
-Installation may take 15-25 minutes depending on internet speed.
+Installation may take 15-35 minutes depending on internet speed.
 
 [!] Please copy ALL terminal output if you encounter any errors.
 
 Press Ctrl+C to cancel, or
 "@ -ForegroundColor White
 
-Read-Host "Press Enter to continue"
+Read-Host "Press Enter to continue with installation"
 
 # System Information for support
 Write-Step "Collecting System Information"
@@ -435,8 +435,8 @@ else {
 # Download and test the workshop model
 if ($failed.Count -eq 0) {
     Write-Step "Pre-downloading Workshop Model"
-    Write-Warning "This step downloads the Qwen2-0.5B model (~1.8GB) to save time during workshop"
-    Write-Info "Expected time: 2-8 minutes depending on internet speed"
+    Write-Warning "This step downloads the Qwen2-0.5B model (~1 GB) to save time during workshop"
+    Write-Info "Expected time: 2-15 minutes depending on internet speed"
     Write-Info "The model will be cached for offline use during the workshop..."
     
     try {
@@ -605,7 +605,7 @@ To start the workshop:
 5. VS Code should automatically use the "Workshop Environment" kernel
 
 Environment location: $workshopPath\.venv
-Total download: 3GB (packages + model)
+Total download: ~3GB (packages + model)
 
 NOTE: The model is now cached locally - loading will be instant during the workshop!
 "@ -ForegroundColor Green

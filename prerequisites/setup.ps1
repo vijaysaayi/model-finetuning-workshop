@@ -107,32 +107,6 @@ catch {
     Write-Warning "Could not collect system info: $_"
 }
 
-# Check execution policy
-Write-Step "Checking PowerShell Execution Policy"
-$currentPolicy = Get-ExecutionPolicy -Scope CurrentUser
-Write-Info "Current execution policy: $currentPolicy"
-
-if ($currentPolicy -eq "Restricted" -or $currentPolicy -eq "Undefined") {
-    if ($currentPolicy -eq "Undefined") {
-        Write-Info "Execution policy is undefined, setting for current user..."
-    }
-    else {
-        Write-Warning "PowerShell execution policy is restricted."
-    }
-    Write-Info "Attempting to allow script execution for current user..."
-    
-    try {
-        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-        Write-Success "Execution policy updated successfully"
-    }
-    catch {
-        Write-Error "Failed to update execution policy: $_"
-        Write-Support "Please run PowerShell as Administrator and try again"
-        Read-Host "Press Enter to exit"
-        exit 1
-    }
-}
-
 # Check winget availability
 Write-Step "Checking Windows Package Manager (winget)"
 try {
@@ -601,7 +575,7 @@ To start the workshop:
 1. Open VS Code
 2. Click "File" -> "Open Folder"
 3. Navigate to and select the workshop folder: $workshopPath
-4. Open the model-finetune.ipynb notebook
+4. Open the model-finetune-handon.ipynb notebook
 5. VS Code should automatically use the "Workshop Environment" kernel
 
 Environment location: $workshopPath\.venv

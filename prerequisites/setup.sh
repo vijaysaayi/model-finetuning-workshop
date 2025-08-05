@@ -511,7 +511,7 @@ To start the workshop:
 1. Open VS Code
 2. Click "File" -> "Open Folder"
 3. Navigate to and select the workshop folder: $WORKSHOP_DIR
-4. Open the model-finetune.ipynb notebook
+4. Open the model-finetune-handon.ipynb notebook
 5. VS Code should automatically use the "Workshop Environment" kernel
 
 Environment location: $WORKSHOP_DIR/.venv

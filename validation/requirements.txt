@@ -1,0 +1,18 @@
+# Requirements for Model Fine-tuning Validation Script
+# Install these packages before running the validation script
+
+torch>=2.0.0
+transformers>=4.35.0
+datasets>=2.14.0
+trl>=0.7.0
+peft>=0.6.0
+accelerate>=0.24.0
+tokenizers>=0.15.0
+huggingface-hub>=0.19.0
+
+# Optional: For better performance and faster downloads
+# hf-transfer  # Uncomment if you want faster HuggingFace downloads
+
+# Development and testing
+pytest>=7.4.0
+jupyter>=1.0.0

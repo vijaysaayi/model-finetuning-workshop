@@ -258,3 +258,4 @@ secrets.json
 .env.production.local
 
 output/
+validation/quick_test_output/

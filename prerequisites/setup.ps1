@@ -55,6 +55,29 @@ function Write-Support($message) {
     Write-Host "[SUPPORT] $message" -ForegroundColor Magenta
 }
 
+# Helper functions for manual installation steps
+function Show-PythonManualInstallSteps {
+    Write-Info ""
+    Write-Info "MANUAL INSTALLATION STEPS:"
+    Write-Info "1. Visit: https://www.python.org/downloads/windows/"
+    Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
+    Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
+    Write-Info "4. After installation, open NEW PowerShell and type: python --version"
+    Write-Info "5. If successful, re-run this setup script again"
+    Write-Support "If manual installation fails, copy this error and contact workshop organizers"
+}
+
+function Show-VSCodeManualInstallSteps {
+    Write-Info ""
+    Write-Info "MANUAL INSTALLATION STEPS:"
+    Write-Info "1. Visit: https://code.visualstudio.com/"
+    Write-Info "2. Click 'Download for Windows' (User Installer 64-bit)"
+    Write-Info "3. Run the installer (accept all defaults)"
+    Write-Info "4. After installation, VS Code will be available in Start Menu"
+    Write-Info "5. Re-run this setup script to continue with the workshop setup"
+    Write-Support "If manual VS Code installation fails, copy this error and contact workshop organizers"
+}
+
 # Header
 Clear-Host
 Write-Host @"
@@ -194,40 +217,21 @@ catch {
         elseif ($wingetExitCode -eq -1978335205 -or $wingetResult -match "APPINSTALLER_CLI_ERROR_MSSTORE_BLOCKED_BY_POLICY") {
             Write-Error "Microsoft Store is blocked by policy on this system"
             Write-Info "This is common in corporate environments"
-            Write-Info ""
-            Write-Info "MANUAL INSTALLATION STEPS:"
-            Write-Info "1. Visit: https://www.python.org/downloads/windows/"
-            Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
-            Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
-            Write-Info "4. After installation, open NEW PowerShell and type: python --version"
-            Write-Info "5. If successful, re-run this setup script"
-            Write-Info ""
-            throw "Microsoft Store blocked by policy"
+            Show-PythonManualInstallSteps
+            Read-Host "Press Enter to exit"
+            exit 1
         }
         else {
             Write-Error "winget install failed with exit code: $wingetExitCode"
             Write-Info "winget output: $wingetResult"
-            Write-Info ""
-            Write-Info "MANUAL INSTALLATION STEPS:"
-            Write-Info "1. Visit: https://www.python.org/downloads/windows/"
-            Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
-            Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
-            Write-Info "4. After installation, open NEW PowerShell and type: python --version"
-            Write-Info "5. If successful, re-run this setup script"
-            Write-Support "If manual installation fails, copy this error and contact workshop organizers"
-            throw "winget install failed"
+            Show-PythonManualInstallSteps
+            Read-Host "Press Enter to exit"
+            exit 1
         }
     }
     catch {
         Write-Error "Failed to install Python: $_"
-        Write-Info ""
-        Write-Info "MANUAL INSTALLATION STEPS:"
-        Write-Info "1. Visit: https://www.python.org/downloads/windows/"
-        Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
-        Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
-        Write-Info "4. After installation, open NEW PowerShell and type: python --version"
-        Write-Info "5. If successful, re-run this setup script"
-        Write-Support "If manual installation fails, copy this error and contact workshop organizers"
+        Show-PythonManualInstallSteps
         Read-Host "Press Enter to exit"
         exit 1
     }
@@ -277,40 +281,20 @@ catch {
         elseif ($wingetExitCode -eq -1978335205 -or $wingetResult -match "APPINSTALLER_CLI_ERROR_MSSTORE_BLOCKED_BY_POLICY") {
             Write-Error "Microsoft Store is blocked by policy on this system"
             Write-Warning "VS Code installation failed, but this won't prevent the workshop"
-            Write-Info ""
-            Write-Info "MANUAL INSTALLATION STEPS:"
-            Write-Info "1. Visit: https://code.visualstudio.com/"
-            Write-Info "2. Click 'Download for Windows' (User Installer 64-bit)"
-            Write-Info "3. Run the installer (accept all defaults)"
-            Write-Info "4. After installation, VS Code will be available in Start Menu"
-            Write-Info "5. You can continue with this setup script"
-            Write-Support "If manual VS Code installation fails, copy this error and contact workshop organizers"
+            Show-VSCodeManualInstallSteps
         }
         else {
             Write-Error "winget install failed with exit code: $wingetExitCode"
             Write-Info "winget output: $wingetResult"
-            Write-Info ""
-            Write-Info "MANUAL INSTALLATION STEPS:"
-            Write-Info "1. Visit: https://code.visualstudio.com/"
-            Write-Info "2. Click 'Download for Windows' (User Installer 64-bit)"
-            Write-Info "3. Run the installer (accept all defaults)"
-            Write-Info "4. After installation, VS Code will be available in Start Menu"
-            Write-Info "5. You can continue with this setup script"
-            Write-Support "If manual VS Code installation fails, copy this error and contact workshop organizers"
-            throw "winget install failed"
+            Show-VSCodeManualInstallSteps
+            Read-Host "Press Enter to exit"
+            exit 1
         }
     }
     catch {
         Write-Error "Failed to install VS Code: $_"
         Write-Warning "VS Code installation failed, but this won't prevent the workshop"
-        Write-Info ""
-        Write-Info "MANUAL INSTALLATION STEPS:"
-        Write-Info "1. Visit: https://code.visualstudio.com/"
-        Write-Info "2. Click 'Download for Windows' (User Installer 64-bit)"
-        Write-Info "3. Run the installer (accept all defaults)"
-        Write-Info "4. After installation, VS Code will be available in Start Menu"
-        Write-Info "5. You can continue with this setup script"
-        Write-Support "If manual VS Code installation fails, copy this error and contact workshop organizers"
+        Show-VSCodeManualInstallSteps
     }
 }
 

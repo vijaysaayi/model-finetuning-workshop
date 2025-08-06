@@ -14,11 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        exclude:
-          # Exclude Python 3.13 on Windows due to potential PyTorch compatibility issues
-          - os: windows-latest
-            python-version: "3.13"
-    
+
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     

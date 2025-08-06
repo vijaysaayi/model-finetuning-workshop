@@ -170,9 +170,12 @@ catch {
     Write-Info "This may take 3-5 minutes depending on internet speed..."
     
     try {
-        winget install Python.Python.3.11 --accept-source-agreements --accept-package-agreements --scope user
+        $wingetResult = winget install Python.Python.3.11 --accept-source-agreements --accept-package-agreements --scope user 2>&1
+        $wingetExitCode = $LASTEXITCODE
         
-        if ($LASTEXITCODE -eq 0) {
+        Write-Info "winget exit code: $wingetExitCode"
+        
+        if ($wingetExitCode -eq 0) {
             Write-Success "Python installation completed"
             
             # Refresh PATH
@@ -188,15 +191,43 @@ catch {
                 Write-Warning "Python installed but not accessible. You may need to restart PowerShell."
             }
         }
+        elseif ($wingetExitCode -eq -1978335205 -or $wingetResult -match "APPINSTALLER_CLI_ERROR_MSSTORE_BLOCKED_BY_POLICY") {
+            Write-Error "Microsoft Store is blocked by policy on this system"
+            Write-Info "This is common in corporate environments"
+            Write-Info ""
+            Write-Info "MANUAL INSTALLATION STEPS:"
+            Write-Info "1. Visit: https://www.python.org/downloads/windows/"
+            Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
+            Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
+            Write-Info "4. After installation, open NEW PowerShell and type: python --version"
+            Write-Info "5. If successful, re-run this setup script"
+            Write-Info ""
+            throw "Microsoft Store blocked by policy"
+        }
         else {
+            Write-Error "winget install failed with exit code: $wingetExitCode"
+            Write-Info "winget output: $wingetResult"
+            Write-Info ""
+            Write-Info "MANUAL INSTALLATION STEPS:"
+            Write-Info "1. Visit: https://www.python.org/downloads/windows/"
+            Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
+            Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
+            Write-Info "4. After installation, open NEW PowerShell and type: python --version"
+            Write-Info "5. If successful, re-run this setup script"
+            Write-Support "If manual installation fails, copy this error and contact workshop organizers"
             throw "winget install failed"
         }
     }
     catch {
         Write-Error "Failed to install Python: $_"
-        Write-Support "Please copy this error and contact workshop organizers"
-        Write-Info "Manual installation: https://python.org/downloads/"
-        Write-Info "If winget fails, try running PowerShell as Administrator"
+        Write-Info ""
+        Write-Info "MANUAL INSTALLATION STEPS:"
+        Write-Info "1. Visit: https://www.python.org/downloads/windows/"
+        Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
+        Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
+        Write-Info "4. After installation, open NEW PowerShell and type: python --version"
+        Write-Info "5. If successful, re-run this setup script"
+        Write-Support "If manual installation fails, copy this error and contact workshop organizers"
         Read-Host "Press Enter to exit"
         exit 1
     }
@@ -221,9 +252,12 @@ catch {
     Write-Info "This may take 2-3 minutes depending on internet speed..."
     
     try {
-        winget install Microsoft.VisualStudioCode --accept-source-agreements --accept-package-agreements --scope user
+        $wingetResult = winget install Microsoft.VisualStudioCode --accept-source-agreements --accept-package-agreements --scope user 2>&1
+        $wingetExitCode = $LASTEXITCODE
         
-        if ($LASTEXITCODE -eq 0) {
+        Write-Info "winget exit code: $wingetExitCode"
+        
+        if ($wingetExitCode -eq 0) {
             Write-Success "VS Code installation completed"
             
             # Refresh PATH
@@ -240,15 +274,43 @@ catch {
                 Write-Info "This is normal - you can still use VS Code from Start Menu"
             }
         }
+        elseif ($wingetExitCode -eq -1978335205 -or $wingetResult -match "APPINSTALLER_CLI_ERROR_MSSTORE_BLOCKED_BY_POLICY") {
+            Write-Error "Microsoft Store is blocked by policy on this system"
+            Write-Warning "VS Code installation failed, but this won't prevent the workshop"
+            Write-Info ""
+            Write-Info "MANUAL INSTALLATION STEPS:"
+            Write-Info "1. Visit: https://code.visualstudio.com/"
+            Write-Info "2. Click 'Download for Windows' (User Installer 64-bit)"
+            Write-Info "3. Run the installer (accept all defaults)"
+            Write-Info "4. After installation, VS Code will be available in Start Menu"
+            Write-Info "5. You can continue with this setup script"
+            Write-Support "If manual VS Code installation fails, copy this error and contact workshop organizers"
+        }
         else {
+            Write-Error "winget install failed with exit code: $wingetExitCode"
+            Write-Info "winget output: $wingetResult"
+            Write-Info ""
+            Write-Info "MANUAL INSTALLATION STEPS:"
+            Write-Info "1. Visit: https://code.visualstudio.com/"
+            Write-Info "2. Click 'Download for Windows' (User Installer 64-bit)"
+            Write-Info "3. Run the installer (accept all defaults)"
+            Write-Info "4. After installation, VS Code will be available in Start Menu"
+            Write-Info "5. You can continue with this setup script"
+            Write-Support "If manual VS Code installation fails, copy this error and contact workshop organizers"
             throw "winget install failed"
         }
     }
     catch {
         Write-Error "Failed to install VS Code: $_"
         Write-Warning "VS Code installation failed, but this won't prevent the workshop"
-        Write-Info "You can manually install from: https://code.visualstudio.com/"
-        Write-Info "If winget fails, try running PowerShell as Administrator"
+        Write-Info ""
+        Write-Info "MANUAL INSTALLATION STEPS:"
+        Write-Info "1. Visit: https://code.visualstudio.com/"
+        Write-Info "2. Click 'Download for Windows' (User Installer 64-bit)"
+        Write-Info "3. Run the installer (accept all defaults)"
+        Write-Info "4. After installation, VS Code will be available in Start Menu"
+        Write-Info "5. You can continue with this setup script"
+        Write-Support "If manual VS Code installation fails, copy this error and contact workshop organizers"
     }
 }
 
@@ -317,7 +379,14 @@ try {
 }
 catch {
     Write-Error "Failed to create virtual environment: $_"
-    Write-Support "Copy this error and contact workshop organizers"
+    Write-Info ""
+    Write-Info "MANUAL VIRTUAL ENVIRONMENT CREATION:"
+    Write-Info "1. Open PowerShell in the workshop directory: $workshopPath"
+    Write-Info "2. Run: python -m venv .venv"
+    Write-Info "3. If successful, you should see a .venv folder created"
+    Write-Info "4. Then run: .venv\\Scripts\\Activate.ps1"
+    Write-Info "5. If successful, re-run this setup script"
+    Write-Support "If manual virtual environment creation fails, copy this error and contact workshop organizers"
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -330,7 +399,13 @@ try {
 }
 catch {
     Write-Error "Failed to activate virtual environment: $_"
-    Write-Support "Copy this error and contact workshop organizers"
+    Write-Info ""
+    Write-Info "MANUAL VIRTUAL ENVIRONMENT ACTIVATION:"
+    Write-Info "1. Open PowerShell in the workshop directory: $workshopPath"
+    Write-Info "2. Run: .venv\\Scripts\\Activate.ps1"
+    Write-Info "3. You should see (.venv) appear at the start of your command prompt"
+    Write-Info "4. If successful, continue with: pip install -r prerequisites\\requirements.txt"
+    Write-Support "If manual activation fails, copy this error and contact workshop organizers"
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -368,11 +443,15 @@ if (Test-Path "prerequisites\requirements.txt") {
     }
     catch {
         Write-Error "Failed to install workshop dependencies: $_"
+        Write-Info ""
+        Write-Info "MANUAL PACKAGE INSTALLATION:"
+        Write-Info "1. Ensure virtual environment is activated: .venv\\Scripts\\Activate.ps1"
+        Write-Info "2. Check you're in workshop directory: $workshopPath"
+        Write-Info "3. Run manually: pip install -r prerequisites\\requirements.txt"
+        Write-Info "4. Wait for installation to complete (15-25 minutes)"
+        Write-Info "5. If successful, re-run this setup script"
+        Write-Info ""
         Write-Support "IMPORTANT: Copy the above pip output and contact workshop organizers"
-        Write-Info "Common solutions:"
-        Write-Info "1. Check internet connection"
-        Write-Info "2. Try running as Administrator"
-        Write-Info "3. Check available disk space (need 3GB+)"
         Read-Host "Press Enter to exit"
         exit 1
     }
@@ -413,6 +492,15 @@ if ($failed.Count -eq 0) {
 }
 else {
     Write-Error "Package verification failed for: $($failed -join ', ')"
+    Write-Info ""
+    Write-Info "MANUAL PACKAGE VERIFICATION:"
+    Write-Info "1. Ensure virtual environment is activated: .venv\\Scripts\\Activate.ps1"
+    Write-Info "2. Test each package manually:"
+    foreach ($pkg in $failed) {
+        Write-Info "   - python -c 'import $pkg; print($pkg.__version__)'"
+    }
+    Write-Info "3. If imports fail, try reinstalling: pip install --upgrade $($failed -join ' ')"
+    Write-Info "4. Check for error messages in pip output above"
     Write-Support "Copy this error and contact workshop organizers"
 }
 
@@ -532,7 +620,13 @@ try {
 }
 catch {
     Write-Warning "Failed to register Jupyter kernel: $_"
-    Write-Info "This may affect VS Code notebook functionality"
+    Write-Info ""
+    Write-Info "MANUAL JUPYTER KERNEL REGISTRATION:"
+    Write-Info "1. Ensure virtual environment is activated: .venv\\Scripts\\Activate.ps1"
+    Write-Info "2. Run: python -m ipykernel install --user --name=.venv --display-name='Workshop Environment'"
+    Write-Info "3. This step is optional - VS Code can still work without it"
+    Write-Info "4. In VS Code, you can manually select the Python interpreter: .venv\\Scripts\\python.exe"
+    Write-Support "If VS Code notebook functionality doesn't work, copy this error and contact workshop organizers"
 }
 
 # Create VS Code workspace configuration
@@ -562,7 +656,13 @@ try {
 }
 catch {
     Write-Warning "Failed to create VS Code configuration: $_"
-    Write-Info "You may need to manually select the Python interpreter in VS Code"
+    Write-Info ""
+    Write-Info "MANUAL VS CODE CONFIGURATION:"
+    Write-Info "1. Open VS Code in the workshop folder: $workshopPath"
+    Write-Info "2. Press Ctrl+Shift+P and type 'Python: Select Interpreter'"
+    Write-Info "3. Choose: .venv\\Scripts\\python.exe"
+    Write-Info "4. When opening notebook files, select 'Workshop Environment' kernel"
+    Write-Support "If VS Code configuration issues persist, copy this error and contact workshop organizers"
 }
 
 # Final instructions

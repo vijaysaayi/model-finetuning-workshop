@@ -1,0 +1,255 @@
+name: Model Fine-tuning Validation CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'validation/**'
+      - 'prerequisites/**'
+      - '.github/workflows/validation-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'validation/**'
+      - 'prerequisites/**'
+      - '.github/workflows/validation-ci.yml'
+  workflow_dispatch:
+    inputs:
+      python_versions:
+        description: 'Python versions to test (comma-separated)'
+        required: false
+        default: '3.8,3.9,3.10,3.11,3.12,3.13'
+      operating_systems:
+        description: 'OS to test (comma-separated: ubuntu-latest,windows-latest)'
+        required: false
+        default: 'ubuntu-latest,windows-latest'
+
+# Cancel previous runs if new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job to determine matrix configurations
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      python-versions: ${{ steps.matrix.outputs.python-versions }}
+      operating-systems: ${{ steps.matrix.outputs.operating-systems }}
+    steps:
+      - name: Setup test matrix
+        id: matrix
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PYTHON_VERSIONS="${{ github.event.inputs.python_versions }}"
+            OS_VERSIONS="${{ github.event.inputs.operating_systems }}"
+          else
+            PYTHON_VERSIONS="3.8,3.9,3.10,3.11,3.12,3.13"
+            OS_VERSIONS="ubuntu-latest,windows-latest"
+          fi
+          
+          # Convert comma-separated strings to JSON arrays
+          PYTHON_JSON=$(echo "[$PYTHON_VERSIONS]" | sed 's/,/","/g' | sed 's/\[/["/' | sed 's/\]/"]/')
+          OS_JSON=$(echo "[$OS_VERSIONS]" | sed 's/,/","/g' | sed 's/\[/["/' | sed 's/\]/"]/')
+          
+          echo "python-versions=$PYTHON_JSON" >> $GITHUB_OUTPUT
+          echo "operating-systems=$OS_JSON" >> $GITHUB_OUTPUT
+          
+          echo "Testing Python versions: $PYTHON_JSON"
+          echo "Testing on OS: $OS_JSON"
+
+  # Main validation job
+  validate-finetuning:
+    needs: setup-matrix
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false  # Continue other jobs even if one fails
+      matrix:
+        os: ${{ fromJson(needs.setup-matrix.outputs.operating-systems) }}
+        python-version: ${{ fromJson(needs.setup-matrix.outputs.python-versions) }}
+        exclude:
+          # PyTorch has limited support for Python 3.13 on some platforms
+          - os: windows-latest
+            python-version: "3.13"
+    
+    env:
+      # Environment variables for consistent behavior
+      PYTHONUNBUFFERED: 1
+      TOKENIZERS_PARALLELISM: false
+      HF_HUB_DISABLE_PROGRESS_BARS: 1
+      HF_HUB_ENABLE_HF_TRANSFER: 0  # Disable for CI stability
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1  # Shallow clone for faster checkout
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'  # Cache pip dependencies
+          cache-dependency-path: |
+            prerequisites/requirements.txt
+            validation/requirements.txt
+      
+      - name: Display system information
+        run: |
+          echo "🖥️ System Information:"
+          echo "OS: ${{ runner.os }} (${{ matrix.os }})"
+          echo "Python: ${{ matrix.python-version }}"
+          python --version
+          python -c "import sys; print(f'Python executable: {sys.executable}')"
+          python -c "import platform; print(f'Architecture: {platform.machine()}')"
+          pip --version
+        shell: bash
+      
+      - name: Create virtual environment
+        run: |
+          echo "🔧 Creating virtual environment..."
+          python -m venv venv
+        shell: bash
+      
+      - name: Activate virtual environment (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          echo "🔄 Activating virtual environment (Unix)..."
+          source venv/bin/activate
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+          echo "PATH=$VIRTUAL_ENV/bin:$PATH" >> $GITHUB_ENV
+          which python
+          which pip
+        shell: bash
+      
+      - name: Activate virtual environment (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "🔄 Activating virtual environment (Windows)..."
+          .\venv\Scripts\Activate.ps1
+          $env:VIRTUAL_ENV = "$(Get-Location)\venv"
+          $env:PATH = "$env:VIRTUAL_ENV\Scripts;$env:PATH"
+          echo "VIRTUAL_ENV=$env:VIRTUAL_ENV" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-Command python
+          Get-Command pip
+        shell: pwsh
+      
+      - name: Upgrade pip and install build tools
+        run: |
+          echo "📦 Upgrading pip and installing build tools..."
+          python -m pip install --upgrade pip setuptools wheel
+          pip --version
+        shell: bash
+      
+      - name: Install prerequisites packages
+        run: |
+          echo "📚 Installing packages from prerequisites/requirements.txt..."
+          pip install -r prerequisites/requirements.txt
+          echo "✅ Prerequisites installation completed"
+        shell: bash
+      
+      - name: Install validation packages
+        run: |
+          echo "🧪 Installing packages from validation/requirements.txt..."
+          pip install -r validation/requirements.txt
+          echo "✅ Validation packages installation completed"
+        shell: bash
+      
+      - name: Verify package installation
+        run: |
+          echo "🔍 Verifying critical packages are installed..."
+          python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+          python -c "import transformers; print(f'Transformers version: {transformers.__version__}')"
+          python -c "import datasets; print(f'Datasets version: {datasets.__version__}')"
+          python -c "import peft; print(f'PEFT version: {peft.__version__}')"
+          python -c "import trl; print(f'TRL version: {trl.__version__}')"
+          echo "✅ All critical packages verified"
+        shell: bash
+      
+      - name: List installed packages
+        run: |
+          echo "📋 Installed packages:"
+          pip list --format=columns
+        shell: bash
+      
+      - name: Run quick validation test
+        run: |
+          echo "🚀 Running validation/quick_test.py..."
+          echo "Current directory: $(pwd)"
+          echo "Python path: $(which python)"
+          cd validation
+          python quick_test.py
+        shell: bash
+        env:
+          # Additional environment variables for model execution
+          OMP_NUM_THREADS: 1  # Limit OpenMP threads for CI
+          MKL_NUM_THREADS: 1  # Limit MKL threads for CI
+          NUMEXPR_MAX_THREADS: 1  # Limit NumExpr threads for CI
+      
+      - name: Check output files (if any)
+        run: |
+          echo "📁 Checking for output files..."
+          if [ -d "validation/quick_test_output" ]; then
+            echo "Output directory contents:"
+            ls -la validation/quick_test_output/ || true
+          else
+            echo "No output directory found (expected for quick test)"
+          fi
+        shell: bash
+        continue-on-error: true
+      
+      - name: Clean up large files
+        if: always()
+        run: |
+          echo "🧹 Cleaning up large model files to save space..."
+          rm -rf validation/quick_test_output/ || true
+          rm -rf ~/.cache/huggingface/ || true
+        shell: bash
+        continue-on-error: true
+
+  # Summary job that reports overall results
+  validation-summary:
+    needs: [setup-matrix, validate-finetuning]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Generate test summary
+        run: |
+          echo "## 🎯 Model Fine-tuning Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Matrix" >> $GITHUB_STEP_SUMMARY
+          echo "- **Python versions tested**: ${{ needs.setup-matrix.outputs.python-versions }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Operating systems tested**: ${{ needs.setup-matrix.outputs.operating-systems }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.validate-finetuning.result }}" = "success" ]; then
+            echo "### ✅ Results: SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "All validation tests passed successfully across all configurations!" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.validate-finetuning.result }}" = "failure" ]; then
+            echo "### ❌ Results: FAILURE" >> $GITHUB_STEP_SUMMARY
+            echo "Some validation tests failed. Please check the individual job logs for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚠️ Results: PARTIAL" >> $GITHUB_STEP_SUMMARY
+            echo "Validation completed with mixed results. Check individual job logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Test Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: Model Fine-tuning Validation" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test script**: validation/quick_test.py" >> $GITHUB_STEP_SUMMARY
+          echo "- **Model**: Qwen2-0.5B with LoRA fine-tuning" >> $GITHUB_STEP_SUMMARY
+          echo "- **Training epochs**: 3 (quick test)" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Report final status
+        run: |
+          if [ "${{ needs.validate-finetuning.result }}" = "success" ]; then
+            echo "🎉 All validation tests completed successfully!"
+            exit 0
+          else
+            echo "❌ Some validation tests failed or were cancelled"
+            exit 1
+          fi

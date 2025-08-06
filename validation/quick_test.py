@@ -35,13 +35,23 @@ TEST_QUESTIONS = [
     "Is there a discount for new customers?"
 ]
 
+def safe_print(text):
+    """Print text with fallback for encoding issues."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Remove emojis and special characters for Windows compatibility
+        import re
+        clean_text = re.sub(r'[^\x00-\x7F]+', '', text)
+        print(clean_text)
+
 def quick_test():
     """Run a quick validation test."""
-    print("🚀 Quick Fine-tuning Validation Test")
-    print("=" * 50)
+    safe_print("🚀 Quick Fine-tuning Validation Test")
+    safe_print("=" * 50)
     
     # Load model
-    print("📥 Loading model...")
+    safe_print("📥 Loading model...")
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME)
     model = AutoModelForCausalLM.from_pretrained(BASE_MODEL_NAME, device_map="auto").to(device)
     
@@ -77,11 +87,11 @@ def quick_test():
     )
     trainer.processing_class = tokenizer
     
-    print(f"🎓 Training for {EPOCHS} epochs...")
+    safe_print(f"🎓 Training for {EPOCHS} epochs...")
     trainer.train()
     
     # Test
-    print("\n🧪 Testing quick fine-tuned model:")
+    safe_print("\n🧪 Testing quick fine-tuned model:")
     for question in TEST_QUESTIONS:
         input_text = f"Instruction: {question}\nResponse: "
         inputs = tokenizer(input_text, return_tensors="pt").to(device)
@@ -90,11 +100,11 @@ def quick_test():
             outputs = model.generate(**inputs, max_new_tokens=50, temperature=0.1, do_sample=True, pad_token_id=tokenizer.eos_token_id)
         
         response = tokenizer.decode(outputs[0], skip_special_tokens=True).split("Response: ")[-1].strip()
-        print(f"Q: {question}")
-        print(f"A: {response}")
-        print("-" * 30)
+        safe_print(f"Q: {question}")
+        safe_print(f"A: {response}")
+        safe_print("-" * 30)
     
-    print("✅ Quick test completed!")
+    safe_print("✅ Quick test completed!")
 
 if __name__ == "__main__":
     quick_test()

@@ -8,7 +8,7 @@ This repository includes automated testing workflows for the model fine-tuning v
 **Simple, focused workflow for basic validation**
 
 - **Triggers**: Push to main/develop, PRs, manual dispatch
-- **Python versions**: 3.8, 3.9, 3.10, 3.11, 3.12, 3.13
+- **Python versions**: 3.9, 3.10, 3.11, 3.12, 3.13
 - **Operating systems**: Ubuntu Latest, Windows Latest
 - **Test script**: `validation/quick_test.py`
 - **Runtime**: ~5-10 minutes per job
@@ -63,7 +63,8 @@ Both workflows set these environment variables for consistent execution:
 - `HF_HUB_ENABLE_HF_TRANSFER=0` - Stable downloads in CI
 
 ### Python Version Compatibility
-- **Python 3.8-3.12**: Full support on both Linux and Windows
+
+- **Python 3.9-3.12**: Full support on both Linux and Windows
 - **Python 3.13**: Linux only (Windows excluded due to PyTorch limitations)
 
 ### Virtual Environment Setup
@@ -77,9 +78,9 @@ Each job:
 
 | OS | Python Versions | Total Jobs |
 |---|---|---|
-| Ubuntu Latest | 3.8, 3.9, 3.10, 3.11, 3.12, 3.13 | 6 |
-| Windows Latest | 3.8, 3.9, 3.10, 3.11, 3.12 | 5 |
-| **Total** | | **11 jobs** |
+| Ubuntu Latest | 3.9, 3.10, 3.11, 3.12, 3.13 | 5 |
+| Windows Latest | 3.9, 3.10, 3.11, 3.12 | 4 |
+| **Total** | | **9 jobs** |
 
 ## 🐛 Troubleshooting
 

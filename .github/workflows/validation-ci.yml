@@ -18,7 +18,7 @@ on:
       python_versions:
         description: 'Python versions to test (comma-separated)'
         required: false
-        default: '3.8,3.9,3.10,3.11,3.12,3.13'
+        default: '3.9,3.10,3.11,3.12,3.13'
       operating_systems:
         description: 'OS to test (comma-separated: ubuntu-latest,windows-latest)'
         required: false
@@ -44,7 +44,7 @@ jobs:
             PYTHON_VERSIONS="${{ github.event.inputs.python_versions }}"
             OS_VERSIONS="${{ github.event.inputs.operating_systems }}"
           else
-            PYTHON_VERSIONS="3.8,3.9,3.10,3.11,3.12,3.13"
+            PYTHON_VERSIONS="3.9,3.10,3.11,3.12,3.13"
             OS_VERSIONS="ubuntu-latest,windows-latest"
           fi
           
@@ -77,6 +77,8 @@ jobs:
     env:
       # Environment variables for consistent behavior
       PYTHONUNBUFFERED: 1
+      PYTHONIOENCODING: utf-8       # Force UTF-8 encoding for Python I/O
+      PYTHONUTF8: 1                 # Enable UTF-8 mode for Python 3.7+
       TOKENIZERS_PARALLELISM: false
       HF_HUB_DISABLE_PROGRESS_BARS: 1
       HF_HUB_ENABLE_HF_TRANSFER: 0  # Disable for CI stability

@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         exclude:
           # Exclude Python 3.13 on Windows due to potential PyTorch compatibility issues
           - os: windows-latest
@@ -55,8 +55,16 @@ jobs:
       - name: Install prerequisites
         run: pip install -r prerequisites/requirements.txt
       
+      - name: Test Unicode/Emoji handling
+        run: python validation/test_unicode.py
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
+      
       - name: Run quick validation test
         run: python validation/quick_test.py
         env:
           TOKENIZERS_PARALLELISM: false
           HF_HUB_DISABLE_PROGRESS_BARS: 1
+          PYTHONIOENCODING: utf-8  # Force UTF-8 encoding for Python
+          PYTHONUTF8: 1            # Enable UTF-8 mode for Python 3.7+

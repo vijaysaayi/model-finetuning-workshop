@@ -174,8 +174,8 @@ try {
             $major = [int]$Matches[1]
             $minor = [int]$Matches[2]
             
-            if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 8)) {
-                Write-Warning "Python version is too old (need 3.8+)"
+            if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 9)) {
+                Write-Warning "Python version is too old (need 3.9+)"
                 Write-Info "Installing Python 3.11..."
                 winget install Python.Python.3.11 --accept-source-agreements --accept-package-agreements --scope user
             }

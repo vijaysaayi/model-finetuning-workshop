@@ -25,6 +25,16 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import SFTTrainer
 from peft import LoraConfig, get_peft_model
 
+def safe_print(text):
+    """Print text with fallback for encoding issues on Windows."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Remove emojis and special characters for Windows compatibility
+        import re
+        clean_text = re.sub(r'[^\x00-\x7F]+', '', text)
+        print(clean_text)
+
 # Configuration
 BASE_MODEL_NAME = "Qwen/Qwen2-0.5B"
 OUTPUT_DIR = "./validation_output"
@@ -90,14 +100,14 @@ def load_model_and_tokenizer(model_name, device):
     Returns:
         tuple: (tokenizer, model) - The loaded tokenizer and model
     """
-    print(f"🚀 Loading model: {model_name}")
+    safe_print(f"🚀 Loading model: {model_name}")
     
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto").to(device)
     
-    print(f"✅ Model loaded successfully!")
-    print(f"📊 Model parameters: {model.num_parameters():,}")
-    print()
+    safe_print(f"✅ Model loaded successfully!")
+    safe_print(f"📊 Model parameters: {model.num_parameters():,}")
+    safe_print()
     
     return tokenizer, model
 
@@ -111,8 +121,8 @@ def test_model_responses(model, tokenizer, test_questions, model_name="Model"):
         test_questions: List of questions to ask the model
         model_name: Name to display for the model (for identification)
     """
-    print(f"🧪 TESTING {model_name.upper()}")
-    print("=" * 80)
+    safe_print(f"🧪 TESTING {model_name.upper()}")
+    safe_print("=" * 80)
     
     for i, question in enumerate(test_questions, 1):
         input_text = f"""                    
@@ -149,9 +159,9 @@ def test_model_responses(model, tokenizer, test_questions, model_name="Model"):
         # Extract only the generated response part after "Response:"
         response = response.split("Response:")[-1].strip()
 
-        print(f"❓ Question {i}: {question}")
-        print(f"💬 Response: {response}")
-        print("-" * 80)
+        safe_print(f"❓ Question {i}: {question}")
+        safe_print(f"💬 Response: {response}")
+        safe_print("-" * 80)
 
 def create_training_dataset():
     """
@@ -218,11 +228,11 @@ def create_training_dataset():
     train_dataset = Dataset.from_list(train_data)
     eval_dataset = Dataset.from_list(eval_data)
 
-    print(f"📚 Dataset Statistics:")
-    print(f"- Training examples: {len(train_dataset)}")
-    print(f"- Evaluation examples: {len(eval_dataset)}")
-    print(f"- Total examples: {len(train_dataset) + len(eval_dataset)}")
-    print()
+    safe_print(f"📚 Dataset Statistics:")
+    safe_print(f"- Training examples: {len(train_dataset)}")
+    safe_print(f"- Evaluation examples: {len(eval_dataset)}")
+    safe_print(f"- Total examples: {len(train_dataset) + len(eval_dataset)}")
+    safe_print()
 
     return train_dataset, eval_dataset
 
@@ -242,11 +252,11 @@ def setup_lora_config():
         modules_to_save=["lm_head", "embed_token"],
     )
 
-    print(f"🔧 LoRA Configuration:")
-    print(f"- Rank (r): {peft_config.r}")
-    print(f"- Alpha: {peft_config.lora_alpha}")
-    print(f"- Dropout: {peft_config.lora_dropout}")
-    print()
+    safe_print(f"🔧 LoRA Configuration:")
+    safe_print(f"- Rank (r): {peft_config.r}")
+    safe_print(f"- Alpha: {peft_config.lora_alpha}")
+    safe_print(f"- Dropout: {peft_config.lora_dropout}")
+    safe_print()
 
     return peft_config
 
@@ -270,12 +280,12 @@ def setup_training_args():
         eval_strategy="epoch",
     )
 
-    print(f"⚙️ Training Configuration:")
-    print(f"- Epochs: {training_args.num_train_epochs} (reduced for validation)")
-    print(f"- Batch size: {training_args.per_device_train_batch_size}")
-    print(f"- Learning rate: {training_args.learning_rate}")
-    print(f"- Gradient accumulation steps: {training_args.gradient_accumulation_steps}")
-    print()
+    safe_print(f"⚙️ Training Configuration:")
+    safe_print(f"- Epochs: {training_args.num_train_epochs} (reduced for validation)")
+    safe_print(f"- Batch size: {training_args.per_device_train_batch_size}")
+    safe_print(f"- Learning rate: {training_args.learning_rate}")
+    safe_print(f"- Gradient accumulation steps: {training_args.gradient_accumulation_steps}")
+    safe_print()
 
     return training_args
 
@@ -296,38 +306,38 @@ def main():
     """
     Main function to execute the fine-tuning validation process.
     """
-    print("🎯 Model Fine-tuning Validation Script")
-    print("=" * 60)
-    print(f"📱 Using device: {device}")
-    print(f"🔢 Reduced epochs: {REDUCED_EPOCHS} (for faster validation)")
-    print()
+    safe_print("🎯 Model Fine-tuning Validation Script")
+    safe_print("=" * 60)
+    safe_print(f"📱 Using device: {device}")
+    safe_print(f"🔢 Reduced epochs: {REDUCED_EPOCHS} (for faster validation)")
+    safe_print()
 
     # Step 1: Load base model and tokenizer
-    print("📥 STEP 1: Loading base model and tokenizer")
+    safe_print("📥 STEP 1: Loading base model and tokenizer")
     tokenizer, base_model = load_model_and_tokenizer(BASE_MODEL_NAME, device)
 
     # Step 2: Test base model performance
-    print("🧪 STEP 2: Testing base model performance")
+    safe_print("🧪 STEP 2: Testing base model performance")
     test_model_responses(base_model, tokenizer, TEST_QUESTIONS, "Base Model")
-    print()
+    safe_print()
 
     # Step 3: Prepare training data
-    print("📊 STEP 3: Preparing training dataset")
+    safe_print("📊 STEP 3: Preparing training dataset")
     train_dataset, eval_dataset = create_training_dataset()
 
     # Step 4: Set up LoRA configuration
-    print("🛠️ STEP 4: Setting up LoRA configuration")
+    safe_print("🛠️ STEP 4: Setting up LoRA configuration")
     peft_config = setup_lora_config()
     model = get_peft_model(base_model, peft_config)
     model.print_trainable_parameters()
-    print()
+    safe_print()
 
     # Step 5: Configure training arguments
-    print("⚙️ STEP 5: Configuring training arguments")
+    safe_print("⚙️ STEP 5: Configuring training arguments")
     training_args = setup_training_args()
 
     # Step 6: Initialize trainer
-    print("🎓 STEP 6: Initializing trainer")
+    safe_print("🎓 STEP 6: Initializing trainer")
     trainer = SFTTrainer(
         model=model,
         train_dataset=train_dataset,
@@ -336,49 +346,49 @@ def main():
         args=training_args
     )
     trainer.processing_class = tokenizer
-    print("✅ Trainer initialized successfully!")
-    print()
+    safe_print("✅ Trainer initialized successfully!")
+    safe_print()
 
     # Step 7: Start training
-    print("🚀 STEP 7: Starting fine-tuning process")
-    print(f"⏱️ Training will run for {REDUCED_EPOCHS} epochs (reduced for validation)")
-    print("This may take several minutes depending on your hardware...")
-    print()
+    safe_print("🚀 STEP 7: Starting fine-tuning process")
+    safe_print(f"⏱️ Training will run for {REDUCED_EPOCHS} epochs (reduced for validation)")
+    safe_print("This may take several minutes depending on your hardware...")
+    safe_print()
     
     trainer.train()
-    print("✅ Training completed!")
-    print()
+    safe_print("✅ Training completed!")
+    safe_print()
 
     # Step 8: Save the fine-tuned model
-    print("💾 STEP 8: Saving fine-tuned model")
+    safe_print("💾 STEP 8: Saving fine-tuned model")
     model_save_path = f"{OUTPUT_DIR}/fine-tuned-qwen-0.5b"
     trainer.save_model(model_save_path)
-    print(f"✅ Model saved to: {model_save_path}")
-    print()
+    safe_print(f"✅ Model saved to: {model_save_path}")
+    safe_print()
 
     # Step 9: Test fine-tuned model
-    print("🎯 STEP 9: Testing fine-tuned model performance")
+    safe_print("🎯 STEP 9: Testing fine-tuned model performance")
     fine_tuned_model = AutoModelForCausalLM.from_pretrained(model_save_path).to(device)
     test_model_responses(fine_tuned_model, tokenizer, TEST_QUESTIONS, "Fine-tuned Model")
-    print()
+    safe_print()
 
     # Summary
-    print("🎉 VALIDATION COMPLETED SUCCESSFULLY!")
-    print("=" * 60)
-    print("✅ Summary of completed steps:")
-    print("   1. Loaded base model (Qwen2-0.5B)")
-    print("   2. Tested base model performance")
-    print("   3. Prepared Axiomcart training dataset")
-    print("   4. Configured LoRA for efficient fine-tuning")
-    print(f"   5. Fine-tuned model for {REDUCED_EPOCHS} epochs")
-    print("   6. Saved fine-tuned model")
-    print("   7. Compared base vs fine-tuned performance")
-    print()
-    print("🔍 Next steps:")
-    print("   - Compare responses between base and fine-tuned models")
-    print("   - Experiment with different LoRA configurations")
-    print("   - Try different epoch numbers for optimal results")
-    print("   - Explore Azure AI Foundry for production deployments")
+    safe_print("🎉 VALIDATION COMPLETED SUCCESSFULLY!")
+    safe_print("=" * 60)
+    safe_print("✅ Summary of completed steps:")
+    safe_print("   1. Loaded base model (Qwen2-0.5B)")
+    safe_print("   2. Tested base model performance")
+    safe_print("   3. Prepared Axiomcart training dataset")
+    safe_print("   4. Configured LoRA for efficient fine-tuning")
+    safe_print(f"   5. Fine-tuned model for {REDUCED_EPOCHS} epochs")
+    safe_print("   6. Saved fine-tuned model")
+    safe_print("   7. Compared base vs fine-tuned performance")
+    safe_print()
+    safe_print("🔍 Next steps:")
+    safe_print("   - Compare responses between base and fine-tuned models")
+    safe_print("   - Experiment with different LoRA configurations")
+    safe_print("   - Try different epoch numbers for optimal results")
+    safe_print("   - Explore Azure AI Foundry for production deployments")
 
 if __name__ == "__main__":
     main()

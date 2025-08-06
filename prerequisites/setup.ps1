@@ -7,23 +7,25 @@ param(
 
 if ($Help) {
     Write-Host @"
-Model Fine-Tuning Workshop - Windows Setup Script
+================================================================
+        Model Fine-Tuning Workshop - Windows Setup Script
+================================================================
 
-This script will:
-1. Install Python 3.11 using winget
-2. Install VS Code using winget  
-3. Create a Python virtual environment
-4. Install all workshop dependencies
+WHAT THIS SCRIPT DOES:
+1. Check and Install Python (if needed) using Windows Package Manager (winget)
+2. Check and Install Visual Studio Code (if needed) using winget
+   
+3. Create isolated Python environment
+   - Creates .venv folder in workshop directory
+   - Installs machine learning packages (PyTorch, Transformers, etc.)
+   - Downloads and caches Qwen2-0.5B model (~1GB)
+   
+4. Verifies installation
 
-Usage:
-    Right-click on this file and select "Run with PowerShell"
-    Or from PowerShell: .\setup-windows.ps1
+[!] Please copy ALL terminal output if you encounter any errors.
 
-Requirements:
-- Windows 10/11
-- Internet connection
-
-For support: Copy ALL output if errors occur
+Press Ctrl+C to cancel, or
+Press Enter to continue with installation
 "@
     exit 0
 }
@@ -58,11 +60,19 @@ Clear-Host
 Write-Host @"
 
 ================================================================
-    Model Fine-Tuning Workshop - Windows Setup
+        Model Fine-Tuning Workshop - Windows Setup Script
 ================================================================
 
-This will install Python, VS Code, and workshop dependencies.
-Installation may take 15-35 minutes depending on internet speed.
+WHAT THIS SCRIPT DOES:
+1. Check and Install Python (if needed) using Windows Package Manager (winget)
+2. Check and Install Visual Studio Code (if needed) using winget
+   
+3. Create isolated Python environment
+   - Creates .venv folder in workshop directory
+   - Installs machine learning packages (PyTorch, Transformers, etc.)
+   - Downloads and caches Qwen2-0.5B Small Language model (~1GB)
+   
+4. Verifies installation
 
 [!] Please copy ALL terminal output if you encounter any errors.
 
@@ -128,7 +138,7 @@ catch {
 }
 
 # Install Python
-Write-Step "Installing Python 3.11"
+Write-Step "Installing Python"
 Write-Info "Checking for existing Python installation..."
 
 try {
@@ -563,11 +573,11 @@ if ($failed.Count -eq 0) {
 
 *** SUCCESS! Your workshop environment is ready. ***
 
-[+] Python 3.11 installed
+[+] Python installed
 [+] VS Code installed with Python and Jupyter extensions
 [+] Virtual environment created
 [+] All workshop packages installed
-[+] Qwen2-0.5B model pre-downloaded and cached
+[+] Qwen2-0.5B Small Language model pre-downloaded and cached
 [+] Jupyter kernel registered for VS Code
 [+] VS Code workspace configured
 

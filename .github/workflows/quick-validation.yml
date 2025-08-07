@@ -123,13 +123,22 @@ jobs:
       - name: Test Unicode/Emoji handling
         run: python validation/test_unicode.py
         env:
+          CI: "true"                               # Mark as CI environment
           PYTHONIOENCODING: utf-8
           PYTHONUTF8: 1
       
       - name: Run quick validation test
         run: python validation/quick_test.py
         env:
+          CI: "true"                               # Mark as CI environment
           TOKENIZERS_PARALLELISM: false
           HF_HUB_DISABLE_PROGRESS_BARS: 1
           PYTHONIOENCODING: utf-8  # Force UTF-8 encoding for Python
           PYTHONUTF8: 1            # Enable UTF-8 mode for Python 3.7+
+          # macOS MPS memory management
+          PYTORCH_MPS_HIGH_WATERMARK_RATIO: "0.0"  # Disable MPS memory limit
+          PYTORCH_ENABLE_MPS_FALLBACK: "1"         # Fallback to CPU if MPS fails
+          # Force CPU-only mode for CI to avoid MPS memory issues
+          CUDA_VISIBLE_DEVICES: ""
+          # Additional memory management for all platforms
+          OMP_NUM_THREADS: "1"                     # Reduce OpenMP threads to save memory

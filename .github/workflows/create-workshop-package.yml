@@ -1,0 +1,204 @@
+name: Create Workshop Package
+
+on:
+  # Trigger on releases for automatic distribution
+  release:
+    types: [published]
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: 'Custom package name (without .zip extension)'
+        required: false
+        default: 'model-finetuning-workshop'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  create-package:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Get full history for proper versioning
+    
+    - name: Set package variables
+      id: vars
+      run: |
+        # Determine package name
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          PACKAGE_NAME="model-finetuning-workshop-${{ github.event.release.tag_name }}"
+        elif [[ -n "${{ inputs.package_name }}" ]]; then
+          PACKAGE_NAME="${{ inputs.package_name }}"
+        else
+          # Use commit hash for workflow_dispatch without custom name
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+          PACKAGE_NAME="model-finetuning-workshop-${SHORT_SHA}"
+        fi
+        
+        echo "package_name=${PACKAGE_NAME}" >> $GITHUB_OUTPUT
+        echo "zip_filename=${PACKAGE_NAME}.zip" >> $GITHUB_OUTPUT
+        echo "Package name: ${PACKAGE_NAME}"
+    
+    - name: Create workshop package directory
+      run: |
+        # Create a clean directory structure for packaging
+        mkdir -p workshop-package
+        
+        # Copy all files except excluded directories
+        rsync -av \
+          --exclude='.git/' \
+          --exclude='.github/' \
+          --exclude='validation/' \
+          --exclude='workshop-package/' \
+          ./ workshop-package/
+        
+        echo "Package contents:"
+        find workshop-package -type f | head -20
+        echo "..."
+        echo "Total files: $(find workshop-package -type f | wc -l)"
+    
+    - name: Create README for workshop package
+      run: |
+        cat > workshop-package/WORKSHOP-README.md << 'EOF'
+        # Model Fine-Tuning Workshop Package
+        
+        This is a packaged version of the Model Fine-Tuning Workshop materials.
+        
+        ## Quick Start
+        
+        ### Windows Users
+        1. Extract this ZIP file to your desired location
+        2. Open PowerShell as Administrator
+        3. Navigate to the workshop folder
+        4. Run: `.\prerequisites\setup.ps1`
+        5. Follow the setup instructions
+        
+        ### System Requirements
+        - Windows 10/11 (x64 or ARM64)
+        - At least 8GB RAM (16GB recommended)
+        - 5GB free disk space
+        - Stable internet connection for initial setup
+        
+        ### What's Included
+        - Complete workshop materials
+        - Setup scripts for automated environment configuration
+        - Jupyter notebooks for hands-on learning
+        - Prerequisites and requirements files
+        
+        ### Architecture Support
+        - **ARM64 devices** (Surface Pro X, etc.): Optimized with PyTorch ARM native builds
+        - **x64 devices**: Standard PyTorch installation
+        
+        The setup script automatically detects your system architecture and installs the appropriate version.
+        
+        ## Workshop Structure
+        
+        ```
+        workshop/                 # Main workshop notebook
+        prerequisites/            # Setup scripts and requirements
+        fine-tuned-qwen-0.5b/    # Pre-trained model artifacts
+        output/                   # Training output examples
+        ```
+        
+        ## Support
+        
+        If you encounter issues during setup:
+        1. Copy the complete PowerShell output
+        2. Note your system architecture (x64/ARM64)
+        3. Contact the workshop organizers
+        
+        ## Package Information
+        
+        - Package created: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        - Git commit: ${{ github.sha }}
+        - Package name: ${{ steps.vars.outputs.package_name }}
+        
+        ---
+        
+        Happy learning! 🚀
+        EOF
+    
+    - name: Create ZIP package
+      run: |
+        cd workshop-package
+        
+        # Create the zip file with maximum compression
+        zip -9 -r "../${{ steps.vars.outputs.zip_filename }}" . \
+          -x "*.DS_Store" "*.git*" "__pycache__/*" "*.pyc" "*.pyo" "*.pyd" \
+             ".venv/*" "node_modules/*" "*.log" "*.tmp"
+        
+        cd ..
+        
+        # Verify the zip file
+        echo "ZIP file created: ${{ steps.vars.outputs.zip_filename }}"
+        ls -lh "${{ steps.vars.outputs.zip_filename }}"
+        
+        # Show zip contents summary
+        echo "ZIP contents summary:"
+        unzip -l "${{ steps.vars.outputs.zip_filename }}" | head -20
+        echo "..."
+        echo "Total files in ZIP: $(unzip -l "${{ steps.vars.outputs.zip_filename }}" | tail -1 | awk '{print $2}')"
+    
+    - name: Upload workshop package as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.vars.outputs.package_name }}
+        path: ${{ steps.vars.outputs.zip_filename }}
+        retention-days: 90
+        compression-level: 0  # Already compressed
+    
+    - name: Upload to release (if triggered by release)
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ${{ steps.vars.outputs.zip_filename }}
+        asset_name: ${{ steps.vars.outputs.zip_filename }}
+        asset_content_type: application/zip
+    
+    - name: Generate download instructions
+      run: |
+        echo "## 📦 Workshop Package Created Successfully!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Package Name:** \`${{ steps.vars.outputs.package_name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**File Size:** $(ls -lh "${{ steps.vars.outputs.zip_filename }}" | awk '{print $5}')" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "### 🎉 Release Distribution" >> $GITHUB_STEP_SUMMARY
+          echo "The workshop package has been automatically attached to the release:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** [${{ github.event.release.name }}](${{ github.event.release.html_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Download:** Direct link will be available on the release page" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### 📁 Artifact Download" >> $GITHUB_STEP_SUMMARY
+          echo "The workshop package is available as a workflow artifact:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to the [Actions tab](${{ github.server_url }}/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Click on this workflow run" >> $GITHUB_STEP_SUMMARY
+          echo "3. Download the \`${{ steps.vars.outputs.package_name }}\` artifact" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Package Contents" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Workshop notebooks and materials" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Setup scripts (Windows PowerShell)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Prerequisites and requirements" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Pre-trained model artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Example outputs" >> $GITHUB_STEP_SUMMARY
+        echo "- ❌ GitHub workflows (.github/ excluded)" >> $GITHUB_STEP_SUMMARY
+        echo "- ❌ Validation scripts (validation/ excluded)" >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Distribution Instructions" >> $GITHUB_STEP_SUMMARY
+        echo "Share this ZIP file with workshop attendees along with these instructions:" >> $GITHUB_STEP_SUMMARY
+        echo "1. **Extract** the ZIP to a folder on your computer" >> $GITHUB_STEP_SUMMARY
+        echo "2. **Run setup** by executing \`prerequisites\\setup.ps1\` in PowerShell" >> $GITHUB_STEP_SUMMARY
+        echo "3. **Follow** the automated setup process" >> $GITHUB_STEP_SUMMARY
+        echo "4. **Open** VS Code and start the workshop notebook" >> $GITHUB_STEP_SUMMARY

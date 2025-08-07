@@ -44,36 +44,11 @@ jobs:
           - os: windows-latest
             arch: amd64
             python-version: "3.13"
-          # ARM64 runners (GitHub-hosted)
-          - os: ubuntu-24.04-arm64
-            arch: arm64
-            python-version: "3.9"
-          - os: ubuntu-24.04-arm64
-            arch: arm64
-            python-version: "3.10"
-          - os: ubuntu-24.04-arm64
-            arch: arm64
-            python-version: "3.11"
-          - os: ubuntu-24.04-arm64
+          # Windows ARM64 runners (focused on Python 3.12+ for PyTorch ARM support)
+          - os: windows-latest
             arch: arm64
             python-version: "3.12"
-          - os: ubuntu-24.04-arm64
-            arch: arm64
-            python-version: "3.13"
-          # macOS ARM (Apple Silicon M1/M2)
-          - os: macos-latest
-            arch: arm64
-            python-version: "3.9"
-          - os: macos-latest
-            arch: arm64
-            python-version: "3.10"
-          - os: macos-latest
-            arch: arm64
-            python-version: "3.11"
-          - os: macos-latest
-            arch: arm64
-            python-version: "3.12"
-          - os: macos-latest
+          - os: windows-latest
             arch: arm64
             python-version: "3.13"
 
@@ -117,7 +92,17 @@ jobs:
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
       
-      - name: Install prerequisites
+      - name: Install prerequisites (Windows ARM64)
+        if: runner.os == 'Windows' && matrix.arch == 'arm64'
+        run: |
+          echo "Installing PyTorch 2.7.0 with ARM native builds for Windows ARM64..."
+          pip install torch==2.7.0 --index-url https://download.pytorch.org/whl/cpu --force-reinstall
+          echo "Installing remaining packages from ARM64-specific requirements..."
+          pip install -r prerequisites/requirements-arm64.txt
+        shell: pwsh
+      
+      - name: Install prerequisites (Standard)
+        if: ${{ !(runner.os == 'Windows' && matrix.arch == 'arm64') }}
         run: pip install -r prerequisites/requirements.txt
       
       - name: Test Unicode/Emoji handling

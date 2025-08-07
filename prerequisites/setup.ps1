@@ -24,6 +24,7 @@ WHAT THIS SCRIPT DOES:
    
 4. Verifies installation
 
+[!] Installation could take 15-30 minutes depending on your laptop compute and internet speed.
 [!] Please copy ALL terminal output if you encounter any errors.
 
 Press Ctrl+C to cancel, or
@@ -109,6 +110,7 @@ WHAT THIS SCRIPT DOES:
    
 4. Verifies installation
 
+[!] Installation could take 15-30 minutes depending on your laptop compute and internet speed.
 [!] Please copy ALL terminal output if you encounter any errors.
 
 Press Ctrl+C to cancel, or

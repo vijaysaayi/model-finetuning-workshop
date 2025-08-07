@@ -124,17 +124,69 @@ try {
     $os = Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, TotalPhysicalMemory
     Write-Info "OS: $($os.WindowsProductName) $($os.WindowsVersion)"
     
-    # Detect system architecture
-    $architecture = $env:PROCESSOR_ARCHITECTURE
-    $isARM = $false
-    
-    if ($architecture -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
-        $isARM = $true
-        Write-Info "Architecture: ARM64 (detected)"
-        Write-Info "ARM-optimized setup will be used for better PyTorch performance"
+    # Detect system architecture using WMI for more accurate detection
+    try {
+        $processorArch = (Get-CimInstance Win32_Processor).Architecture
+        $isARM = $false
+        
+        switch ($processorArch) {
+            0 { 
+                $architecture = "x86" 
+                Write-Info "Architecture: x86 (32-bit)"
+            }
+            5 { 
+                $architecture = "ARM" 
+                $isARM = $true
+                Write-Info "Architecture: ARM (32-bit)"
+                Write-Info "ARM-optimized setup will be used for better PyTorch performance"
+            }
+            6 { 
+                $architecture = "Itanium" 
+                Write-Info "Architecture: Itanium (64-bit)"
+            }
+            9 { 
+                $architecture = "x64" 
+                Write-Info "Architecture: x64 (AMD64)"
+            }
+            12 { 
+                $architecture = "ARM64" 
+                $isARM = $true
+                Write-Info "Architecture: ARM64 (64-bit)"
+                Write-Info "ARM-optimized setup will be used for better PyTorch performance"
+            }
+            default { 
+                $architecture = "Unknown ($processorArch)" 
+                Write-Warning "Unknown processor architecture: $processorArch"
+                Write-Info "Falling back to environment variable detection"
+                $envArch = $env:PROCESSOR_ARCHITECTURE
+                if ($envArch -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
+                    $isARM = $true
+                    $architecture = "ARM64 (env fallback)"
+                    Write-Info "Architecture: ARM64 (detected via environment)"
+                    Write-Info "ARM-optimized setup will be used for better PyTorch performance"
+                }
+                else {
+                    $architecture = "$envArch (env fallback)"
+                    Write-Info "Architecture: $architecture"
+                }
+            }
+        }
     }
-    else {
-        Write-Info "Architecture: $architecture"
+    catch {
+        # Fallback to original method if WMI fails
+        Write-Warning "Failed to detect architecture via WMI: $_"
+        Write-Info "Falling back to environment variable detection"
+        $architecture = $env:PROCESSOR_ARCHITECTURE
+        $isARM = $false
+        
+        if ($architecture -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
+            $isARM = $true
+            Write-Info "Architecture: ARM64 (detected via environment fallback)"
+            Write-Info "ARM-optimized setup will be used for better PyTorch performance"
+        }
+        else {
+            Write-Info "Architecture: $architecture (environment fallback)"
+        }
     }
     
     # Fix RAM calculation

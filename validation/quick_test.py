@@ -24,17 +24,6 @@ BASE_MODEL_NAME = "Qwen/Qwen2-0.5B"
 OUTPUT_DIR = "./quick_test_output"
 EPOCHS = 3  # Very minimal for quick testing
 
-# Setup
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
-device = torch.device("cpu")
-warnings.filterwarnings("ignore")
-
-# Minimal test questions
-TEST_QUESTIONS = [
-    "What email address should I use to contact support?",
-    "Is there a discount for new customers?"
-]
-
 def safe_print(text):
     """Print text with fallback for encoding issues."""
     try:
@@ -45,6 +34,29 @@ def safe_print(text):
         clean_text = re.sub(r'[^\x00-\x7F]+', '', text)
         print(clean_text)
 
+# Setup
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
+
+# Device selection - force CPU in CI environments or when MPS memory issues occur
+if os.getenv('CI') or os.getenv('CUDA_VISIBLE_DEVICES') == '':
+    # In CI or when CUDA is disabled, force CPU-only mode
+    device = torch.device("cpu")
+    device_map = None
+    safe_print("🔧 Using CPU-only mode (CI environment or CUDA disabled)")
+else:
+    # Local development - use auto device mapping
+    device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+    device_map = "auto"
+    safe_print(f"🔧 Using device: {device}")
+
+warnings.filterwarnings("ignore")
+
+# Minimal test questions
+TEST_QUESTIONS = [
+    "What email address should I use to contact support?",
+    "Is there a discount for new customers?"
+]
+
 def quick_test():
     """Run a quick validation test."""
     safe_print("🚀 Quick Fine-tuning Validation Test")
@@ -53,7 +65,15 @@ def quick_test():
     # Load model
     safe_print("📥 Loading model...")
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME)
-    model = AutoModelForCausalLM.from_pretrained(BASE_MODEL_NAME, device_map="auto").to(device)
+    
+    # Load model with appropriate device mapping
+    if device_map is None:
+        # CPU-only mode
+        model = AutoModelForCausalLM.from_pretrained(BASE_MODEL_NAME, torch_dtype=torch.float32)
+        model = model.to(device)
+    else:
+        # Auto device mapping
+        model = AutoModelForCausalLM.from_pretrained(BASE_MODEL_NAME, device_map=device_map).to(device)
     
     # Minimal training data
     train_data = [

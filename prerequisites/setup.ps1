@@ -12,18 +12,18 @@ if ($Help) {
 ================================================================
 
 WHAT THIS SCRIPT DOES:
-1. Detect system architecture (x64/ARM64) and install appropriate Python version
-   - ARM64: Python 3.12 (required for PyTorch ARM native builds)
-   - x64: Python 3.11 (stable and compatible)
+1. Detect system architecture and install Python 3.11 for x64
+   - ARM64 Windows devices are NOT supported - use DevBox instead
 2. Check and Install Visual Studio Code (if needed) using winget
    
 3. Create isolated Python environment
    - Creates .venv folder in workshop directory
-   - Installs machine learning packages (PyTorch with ARM optimization, Transformers, etc.)
+   - Installs machine learning packages (PyTorch, Transformers, etc.)
    - Downloads and caches Qwen2-0.5B model (~1GB)
    
 4. Verifies installation
 
+[!] ARM64 Windows devices should use Microsoft DevBox instead.
 [!] Installation could take 15-30 minutes depending on your laptop compute and internet speed.
 [!] Please copy ALL terminal output if you encounter any errors.
 
@@ -63,15 +63,7 @@ function Show-PythonManualInstallSteps {
     Write-Info ""
     Write-Info "MANUAL INSTALLATION STEPS:"
     Write-Info "1. Visit: https://www.python.org/downloads/windows/"
-    
-    if ($isARM) {
-        Write-Info "2. Download 'Python 3.12.x' (Windows installer ARM64) - Required for PyTorch ARM support"
-        Write-Info "   Note: ARM64 version is specifically needed for optimal performance"
-    }
-    else {
-        Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
-    }
-    
+    Write-Info "2. Download 'Python 3.11.x' (Windows installer 64-bit)"
     Write-Info "3. Run the installer and CHECK 'Add Python to PATH'"
     Write-Info "4. After installation, open NEW PowerShell and type: python --version"
     Write-Info "5. If successful, re-run this setup script again"
@@ -98,18 +90,18 @@ Write-Host @"
 ================================================================
 
 WHAT THIS SCRIPT DOES:
-1. Detect system architecture and install appropriate Python version
-   - ARM64 devices: Python 3.12 (enables PyTorch ARM native builds)
-   - x64 devices: Python 3.11 (stable and compatible)
+1. Detect system architecture and install Python 3.11 for x64
+   - ARM64 Windows devices are NOT supported - use DevBox instead
 2. Check and Install Visual Studio Code (if needed) using winget
    
 3. Create isolated Python environment
    - Creates .venv folder in workshop directory
-   - Installs machine learning packages (PyTorch with ARM optimization, Transformers, etc.)
+   - Installs machine learning packages (PyTorch, Transformers, etc.)
    - Downloads and caches Qwen2-0.5B Small Language model (~1GB)
    
 4. Verifies installation
 
+[!] ARM64 Windows devices should use Microsoft DevBox instead.
 [!] Installation could take 15-30 minutes depending on your laptop compute and internet speed.
 [!] Please copy ALL terminal output if you encounter any errors.
 
@@ -220,6 +212,59 @@ catch {
     $isARM = $false
 }
 
+# ARM64 Compatibility Check - Exit Early if ARM64 Detected
+if ($isARM) {
+    Write-Host @"
+
+================================================================
+                     ARM64 DETECTED - UNSUPPORTED
+================================================================
+
+[!] ARM64 Windows devices are NOT supported for this workshop.
+
+WHY ARM64 IS NOT SUPPORTED:
+- Limited PyTorch ARM64 Windows support (experimental)
+- Many ML packages lack stable ARM64 Windows builds
+- Model fine-tuning may have compatibility issues
+- Performance may be significantly reduced
+
+SOLUTION - Use Microsoft DevBox (Recommended):
+================================================================
+
+1. Create a new DevBox:
+   -> Visit: https://devbox.microsoft.com
+   -> Sign in with your Microsoft account
+   -> Create a new DevBox (this provides an x64 cloud environment)
+
+2. Connect to your DevBox:
+   -> Follow the connection steps in the prerequisites Word document
+   -> Your DevBox will have full x64 compatibility
+
+3. Run this setup script in your DevBox:
+   -> Copy this workshop folder to your DevBox
+   -> Run this setup.ps1 script in the DevBox environment
+   -> All packages and models will work reliably
+
+BENEFITS OF DEVBOX:
+- Full x64 compatibility for all ML packages
+- Better performance for model training
+- Cloud compute resources
+- Stable, pre-configured development environment
+- No ARM64-specific compatibility issues
+
+================================================================
+
+The steps to create and connect to a DevBox are provided in the 
+prerequisites Word document shared with you.
+
+"@ -ForegroundColor Red -BackgroundColor Black
+
+    Write-Warning "This script will now exit. Please use DevBox for the workshop."
+    Write-Info "Refer to the prerequisites documentation for DevBox setup instructions."
+    Read-Host "`nPress Enter to exit"
+    exit 1
+}
+
 # Check winget availability
 Write-Step "Checking Windows Package Manager (winget)"
 try {
@@ -243,17 +288,10 @@ catch {
 # Install Python
 Write-Step "Installing Python"
 
-# Determine appropriate Python version based on architecture
-if ($isARM) {
-    $pythonVersion = "3.12"
-    $pythonPackageId = "Python.Python.3.12"
-    Write-Info "ARM64 architecture detected - using Python 3.12 for optimal PyTorch ARM support"
-}
-else {
-    $pythonVersion = "3.11"
-    $pythonPackageId = "Python.Python.3.11"
-    Write-Info "Using Python 3.11 for x64 architecture"
-}
+# Use Python 3.11 for x64 architecture (ARM64 is not supported)
+$pythonVersion = "3.11"
+$pythonPackageId = "Python.Python.3.11"
+Write-Info "Using Python 3.11 for x64 architecture"
 
 Write-Info "Checking for existing Python installation..."
 
@@ -267,26 +305,14 @@ try {
             $major = [int]$Matches[1]
             $minor = [int]$Matches[2]
             
-            # For ARM devices, we need at least Python 3.12 for PyTorch ARM support
-            if ($isARM -and ($major -lt 3 -or ($major -eq 3 -and $minor -lt 12))) {
-                Write-Warning "ARM64 detected: Python version is too old for PyTorch ARM support (need 3.12+)"
-                Write-Info "Installing Python $pythonVersion for optimal ARM performance..."
-                winget install $pythonPackageId --accept-source-agreements --accept-package-agreements --scope user
-            }
-            # For x64 devices, we need at least Python 3.9
-            elseif (-not $isARM -and ($major -lt 3 -or ($major -eq 3 -and $minor -lt 9))) {
+            # We need at least Python 3.9
+            if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 9)) {
                 Write-Warning "Python version is too old (need 3.9+)"
                 Write-Info "Installing Python $pythonVersion..."
                 winget install $pythonPackageId --accept-source-agreements --accept-package-agreements --scope user
             }
             else {
                 Write-Success "Python version is compatible"
-                
-                # Additional note for ARM users about performance
-                if ($isARM -and $major -eq 3 -and $minor -lt 12) {
-                    Write-Info "Note: Your Python version will work, but Python 3.12+ provides better ARM performance"
-                    Write-Info "Consider upgrading to Python 3.12 for optimal PyTorch ARM native builds"
-                }
             }
         }
     }
@@ -296,9 +322,6 @@ try {
 }
 catch {
     Write-Info "Python not found, installing Python $pythonVersion..."
-    if ($isARM) {
-        Write-Info "Installing Python 3.12 for ARM64 - this enables PyTorch ARM native builds"
-    }
     Write-Info "This may take 3-5 minutes depending on internet speed..."
     
     try {
@@ -525,48 +548,15 @@ Write-Info "Progress will be shown below (this may take several minutes):"
 
 if (Test-Path "prerequisites\requirements.txt") {
     try {
-        # For ARM64 Windows, we need to install PyTorch with ARM native builds
-        if ($isARM) {
-            Write-Info "ARM64 detected: Installing PyTorch with ARM native builds..."
-            Write-Info "Using PyTorch ARM-optimized index for Windows ARM64 devices..."
-            
-            # Install PyTorch 2.7.0 with ARM native builds first (exact version as per PyTorch docs)
-            Write-Info "Installing PyTorch 2.7.0 ARM native builds (this may take longer initially)..."
-            pip install torch==2.7.0 --index-url https://download.pytorch.org/whl/cpu --force-reinstall
-            
-            if ($LASTEXITCODE -ne 0) {
-                Write-Warning "ARM native PyTorch installation had issues, falling back to standard installation"
-                Write-Info "Standard PyTorch will still work but may not be ARM-optimized"
-                $requirementsFile = "prerequisites\requirements.txt"
-            }
-            else {
-                Write-Success "PyTorch 2.7.0 ARM native builds installed successfully!"
-                # Use ARM-specific requirements file that excludes torch to avoid conflicts
-                if (Test-Path "prerequisites\requirements-arm64.txt") {
-                    $requirementsFile = "prerequisites\requirements-arm64.txt"
-                    Write-Info "Using ARM-specific requirements file to avoid PyTorch conflicts"
-                }
-                else {
-                    Write-Warning "ARM-specific requirements file not found, using standard requirements"
-                    $requirementsFile = "prerequisites\requirements.txt"
-                }
-            }
-        }
-        else {
-            # Use standard requirements file for x64
-            $requirementsFile = "prerequisites\requirements.txt"
-        }
+        # Use standard requirements file for x64
+        $requirementsFile = "prerequisites\requirements.txt"
         
-        # Install remaining workshop dependencies
-        Write-Info "Installing remaining workshop dependencies from $requirementsFile..."
+        # Install workshop dependencies
+        Write-Info "Installing workshop dependencies from $requirementsFile..."
         pip install -r $requirementsFile
         
         if ($LASTEXITCODE -eq 0) {
             Write-Success "All workshop dependencies installed successfully"
-            
-            if ($isARM) {
-                Write-Info "ARM64 bonus: PyTorch ARM native builds should provide better performance"
-            }
         }
         else {
             throw "pip install failed with exit code $LASTEXITCODE"
@@ -578,15 +568,9 @@ if (Test-Path "prerequisites\requirements.txt") {
         Write-Info "MANUAL PACKAGE INSTALLATION:"
         Write-Info "1. Ensure virtual environment is activated: .venv\\Scripts\\Activate.ps1"
         Write-Info "2. Check you're in workshop directory: $workshopPath"
-        if ($isARM) {
-            Write-Info "3. For ARM64: First install PyTorch: pip install torch==2.7.0 --index-url https://download.pytorch.org/whl/cpu"
-            Write-Info "4. Then install remaining packages: pip install -r prerequisites\\requirements-arm64.txt"
-        }
-        else {
-            Write-Info "3. Run manually: pip install -r prerequisites\\requirements.txt"
-        }
-        Write-Info "5. Wait for installation to complete (15-25 minutes)"
-        Write-Info "6. If successful, re-run this setup script"
+        Write-Info "3. Run manually: pip install -r prerequisites\\requirements.txt"
+        Write-Info "4. Wait for installation to complete (15-25 minutes)"
+        Write-Info "5. If successful, re-run this setup script"
         Write-Info ""
         Write-Support "IMPORTANT: Copy the above pip output and contact workshop organizers"
         Read-Host "Press Enter to exit"
@@ -611,20 +595,7 @@ foreach ($package in $packages) {
     try {
         $version = python -c "import $package; print($package.__version__)" 2>$null
         if ($LASTEXITCODE -eq 0) {
-            if ($package -eq "torch" -and $isARM) {
-                # Check if we actually got ARM-optimized PyTorch
-                $torchInfo = python -c "import torch; print(f'PyTorch {torch.__version__} - Compiled for: {torch.version.debug if hasattr(torch.version, \"debug\") else \"Unknown\"}')" 2>$null
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Success "$package $version (ARM-optimized for Windows ARM64)"
-                    Write-Info "$torchInfo"
-                }
-                else {
-                    Write-Success "$package $version (ARM build verification failed, but should work)"
-                }
-            }
-            else {
-                Write-Success "$package $version"
-            }
+            Write-Success "$package $version"
         }
         else {
             $failed += $package
@@ -659,9 +630,6 @@ if ($failed.Count -eq 0) {
     Write-Step "Pre-downloading Workshop Model"
     Write-Warning "This step downloads the Qwen2-0.5B model (~1 GB) to save time during workshop"
     Write-Info "Expected time: 2-15 minutes depending on internet speed"
-    if ($isARM) {
-        Write-Info "ARM64 detected: Model will leverage PyTorch ARM native builds for optimal performance"
-    }
     Write-Info "The model will be cached for offline use during the workshop..."
     
     try {
@@ -677,16 +645,9 @@ print("Starting model download and verification...")
 device = torch.device("cpu")
 print(f"Using device: {device}")
 
-# Check PyTorch build info for ARM optimization
+# Check PyTorch build info
 print(f"PyTorch version: {torch.__version__}")
-print(f"PyTorch build: {torch.version.debug if hasattr(torch.version, 'debug') else 'Build info not available'}")
-
-# Check if we're on ARM64 and potentially benefiting from native builds
-import platform
-if platform.machine().lower() == 'arm64':
-    print("ARM64 platform detected - should benefit from native PyTorch builds")
-else:
-    print(f"Platform: {platform.machine()}")
+print(f"Platform: {torch.__platform__}")
 
 # Model configuration
 model_name = "Qwen/Qwen2-0.5B"
@@ -833,15 +794,14 @@ catch {
 Write-Step "Setup Complete!"
 
 if ($failed.Count -eq 0) {
-    $architectureNote = if ($isARM) { " (ARM64-optimized)" } else { "" }
     Write-Host @"
 
 *** SUCCESS! Your workshop environment is ready. ***
 
-[+] Python installed$architectureNote
+[+] Python installed
 [+] VS Code installed with Python and Jupyter extensions
 [+] Virtual environment created
-[+] All workshop packages installed$(if ($isARM) { " with ARM native builds" } else { "" })
+[+] All workshop packages installed
 [+] Qwen2-0.5B Small Language model pre-downloaded and cached
 [+] Jupyter kernel registered for VS Code
 [+] VS Code workspace configured
@@ -856,7 +816,7 @@ To start the workshop:
 Environment location: $workshopPath\.venv
 Total download: ~3GB (packages + model)
 
-NOTE: The model is now cached locally - loading will be instant during the workshop!$(if ($isARM) { "`nARM64 BONUS: PyTorch ARM native builds are enabled for optimal performance!" } else { "" })
+NOTE: The model is now cached locally - loading will be instant during the workshop!
 "@ -ForegroundColor Green
 }
 else {

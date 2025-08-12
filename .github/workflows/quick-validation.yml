@@ -1,10 +1,6 @@
 name: Quick Validation Test
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -43,13 +39,6 @@ jobs:
             python-version: "3.12"
           - os: windows-latest
             arch: amd64
-            python-version: "3.13"
-          # Windows ARM64 runners (focused on Python 3.12+ for PyTorch ARM support)
-          - os: windows-latest
-            arch: arm64
-            python-version: "3.12"
-          - os: windows-latest
-            arch: arm64
             python-version: "3.13"
 
     runs-on: ${{ matrix.os }}

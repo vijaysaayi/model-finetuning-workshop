@@ -647,7 +647,6 @@ print(f"Using device: {device}")
 
 # Check PyTorch build info
 print(f"PyTorch version: {torch.__version__}")
-print(f"Platform: {torch.__platform__}")
 
 # Model configuration
 model_name = "Qwen/Qwen2-0.5B"

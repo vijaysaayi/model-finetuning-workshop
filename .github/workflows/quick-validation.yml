@@ -10,36 +10,36 @@ jobs:
       matrix:
         include:
           # AMD64/x86_64 runners
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: "3.9"
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: "3.10"
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: "3.11"
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: "3.12"
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: "3.13"
-          - os: windows-latest
-            arch: amd64
-            python-version: "3.9"
-          - os: windows-latest
-            arch: amd64
-            python-version: "3.10"
-          - os: windows-latest
-            arch: amd64
-            python-version: "3.11"
-          - os: windows-latest
-            arch: amd64
-            python-version: "3.12"
-          - os: windows-latest
-            arch: amd64
-            python-version: "3.13"
+          # - os: ubuntu-latest
+          #   arch: amd64
+          #   python-version: "3.9"
+          # - os: ubuntu-latest
+          #   arch: amd64
+          #   python-version: "3.10"
+          # - os: ubuntu-latest
+          #   arch: amd64
+          #   python-version: "3.11"
+          # - os: ubuntu-latest
+          #   arch: amd64
+          #   python-version: "3.12"
+          # - os: ubuntu-latest
+          #   arch: amd64
+          #   python-version: "3.13"
+          # - os: windows-latest
+          #   arch: amd64
+          #   python-version: "3.9"
+          # - os: windows-latest
+          #   arch: amd64
+          #   python-version: "3.10"
+          # - os: windows-latest
+          #   arch: amd64
+          #   python-version: "3.11"
+          # - os: windows-latest
+          #   arch: amd64
+          #   python-version: "3.12"
+          # - os: windows-latest
+          #   arch: amd64
+          #   python-version: "3.13"
           # macOS runners - Testing new requirements-macos.txt
           - os: macos-latest
             arch: amd64

@@ -54,11 +54,6 @@ except ImportError:
     safe_print("⚠️  Accelerate not found")
     sys.exit(1)
 
-# Remove emojis and special characters for Windows compatibility
-import re
-clean_text = re.sub(r'[^\x00-\x7F]+', '', text)
-print(clean_text)
-
 # Setup
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 

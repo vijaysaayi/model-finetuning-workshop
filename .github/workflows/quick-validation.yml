@@ -40,9 +40,35 @@ jobs:
           - os: windows-latest
             arch: amd64
             python-version: "3.13"
+          # macOS runners - Testing new requirements-macos.txt
+          - os: macos-latest
+            arch: amd64
+            python-version: "3.9"
+          - os: macos-latest
+            arch: amd64
+            python-version: "3.10"
+          - os: macos-latest
+            arch: amd64
+            python-version: "3.11"
+          - os: macos-latest
+            arch: amd64
+            python-version: "3.12"
+          - os: macos-latest
+            arch: amd64
+            python-version: "3.13"
+          # macOS ARM64 (M1/M2) runners - Testing new requirements-macos.txt
+          - os: macos-14
+            arch: arm64
+            python-version: "3.10"
+          - os: macos-14
+            arch: arm64
+            python-version: "3.11"
+          - os: macos-14
+            arch: arm64
+            python-version: "3.12"
 
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30  # Increased timeout for macOS builds
     
     steps:
       - name: Checkout code
@@ -59,6 +85,22 @@ jobs:
           python -c "import platform; print(f'Platform: {platform.platform()}')"
           python -c "import platform; print(f'Machine: {platform.machine()}')"
           python -c "import platform; print(f'Processor: {platform.processor()}')"
+          python -c "import sys; print(f'Python: {sys.version}')"
+          echo "OS: ${{ runner.os }}"
+          echo "Architecture: ${{ matrix.arch }}"
+        shell: bash
+      
+      # Install macOS build tools if needed
+      - name: Install Xcode Command Line Tools (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          # Check if Xcode tools are installed
+          if ! xcode-select -p >/dev/null 2>&1; then
+            echo "Installing Xcode command line tools..."
+            sudo xcode-select --install
+          else
+            echo "Xcode command line tools already installed"
+          fi
         shell: bash
       
       - name: Create virtual environment
@@ -68,18 +110,39 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           source venv/bin/activate
-          echo "PATH=$VIRTUAL_ENV/bin:$PATH" >> $GITHUB_ENV
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
       
       - name: Activate venv (Windows)  
         if: runner.os == 'Windows'
         run: |
           .\venv\Scripts\Activate.ps1
-          $env:PATH = "$(Get-Location)\venv\Scripts;$env:PATH"
-          echo "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $venvPath = "$(Get-Location)\venv\Scripts"
+          echo "PATH=$venvPath;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
         shell: pwsh
       
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
+      
+      - name: Determine requirements file
+        id: requirements
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            if [ -f "prerequisites/requirements-macos.txt" ]; then
+              echo "file=prerequisites/requirements-macos.txt" >> $GITHUB_OUTPUT
+              echo "Using macOS-specific requirements file"
+            else
+              echo "file=prerequisites/requirements.txt" >> $GITHUB_OUTPUT
+              echo "macOS requirements file not found, using default"
+            fi
+          elif [ "${{ runner.os }}" = "Windows" ] && [ "${{ matrix.arch }}" = "arm64" ]; then
+            echo "file=prerequisites/requirements-arm64.txt" >> $GITHUB_OUTPUT
+            echo "Using ARM64 Windows requirements file"
+          else
+            echo "file=prerequisites/requirements.txt" >> $GITHUB_OUTPUT
+            echo "Using default requirements file"
+          fi
+        shell: bash
       
       - name: Install prerequisites (Windows ARM64)
         if: runner.os == 'Windows' && matrix.arch == 'arm64'
@@ -87,32 +150,97 @@ jobs:
           echo "Installing PyTorch 2.7.0 with ARM native builds for Windows ARM64..."
           pip install torch==2.7.0 --index-url https://download.pytorch.org/whl/cpu --force-reinstall
           echo "Installing remaining packages from ARM64-specific requirements..."
-          pip install -r prerequisites/requirements-arm64.txt
+          pip install -r ${{ steps.requirements.outputs.file }}
         shell: pwsh
       
+      - name: Install prerequisites (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "Installing packages from: ${{ steps.requirements.outputs.file }}"
+          echo "Contents of requirements file:"
+          cat ${{ steps.requirements.outputs.file }}
+          echo "Starting installation..."
+          pip install -r ${{ steps.requirements.outputs.file }}
+        shell: bash
+      
       - name: Install prerequisites (Standard)
-        if: ${{ !(runner.os == 'Windows' && matrix.arch == 'arm64') }}
-        run: pip install -r prerequisites/requirements.txt
+        if: runner.os != 'Windows' && runner.os != 'macOS'
+        run: |
+          echo "Installing packages from: ${{ steps.requirements.outputs.file }}"
+          pip install -r ${{ steps.requirements.outputs.file }}
+        shell: bash
+      
+      - name: Install prerequisites (Windows x64)
+        if: runner.os == 'Windows' && matrix.arch != 'arm64'
+        run: |
+          echo "Installing packages from: ${{ steps.requirements.outputs.file }}"
+          pip install -r ${{ steps.requirements.outputs.file }}
+        shell: pwsh
+      
+      - name: Verify PyTorch installation
+        run: |
+          python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+          python -c "import torch; print(f'PyTorch CUDA available: {torch.cuda.is_available()}')"
+          python -c "import torch; print(f'PyTorch MPS available: {torch.backends.mps.is_available() if hasattr(torch.backends, \"mps\") else \"N/A\"}')"
+        shell: bash
+      
+      - name: Verify key packages
+        run: |
+          echo "Verifying package installations..."
+          python -c "import transformers; print(f'Transformers: {transformers.__version__}')"
+          python -c "import datasets; print(f'Datasets: {datasets.__version__}')"
+          python -c "import peft; print(f'PEFT: {peft.__version__}')"
+          python -c "import trl; print(f'TRL: {trl.__version__}')"
+          echo "All key packages imported successfully!"
+        shell: bash
       
       - name: Test Unicode/Emoji handling
         run: python validation/test_unicode.py
         env:
-          CI: "true"                               # Mark as CI environment
+          CI: "true"
           PYTHONIOENCODING: utf-8
           PYTHONUTF8: 1
       
       - name: Run quick validation test
         run: python validation/quick_test.py
         env:
-          CI: "true"                               # Mark as CI environment
+          CI: "true"
           TOKENIZERS_PARALLELISM: false
           HF_HUB_DISABLE_PROGRESS_BARS: 1
-          PYTHONIOENCODING: utf-8  # Force UTF-8 encoding for Python
-          PYTHONUTF8: 1            # Enable UTF-8 mode for Python 3.7+
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
           # macOS MPS memory management
-          PYTORCH_MPS_HIGH_WATERMARK_RATIO: "0.0"  # Disable MPS memory limit
-          PYTORCH_ENABLE_MPS_FALLBACK: "1"         # Fallback to CPU if MPS fails
-          # Force CPU-only mode for CI to avoid MPS memory issues
+          PYTORCH_MPS_HIGH_WATERMARK_RATIO: "0.0"
+          PYTORCH_ENABLE_MPS_FALLBACK: "1"
+          # Force CPU-only mode for CI to avoid memory issues
           CUDA_VISIBLE_DEVICES: ""
           # Additional memory management for all platforms
-          OMP_NUM_THREADS: "1"                     # Reduce OpenMP threads to save memory
+          OMP_NUM_THREADS: "1"
+      
+      - name: Display installed packages (for debugging)
+        if: always()
+        run: |
+          echo "=== Installed packages ==="
+          pip list
+          echo "=== pip show torch ==="
+          pip show torch
+          echo "=== pip show transformers ==="
+          pip show transformers
+        shell: bash
+      
+      - name: Test model loading (minimal test)
+        run: |
+          python -c "
+          import torch
+          from transformers import AutoTokenizer
+          print('Testing minimal model loading...')
+          try:
+              tokenizer = AutoTokenizer.from_pretrained('gpt2')
+              print('✅ Model tokenizer loading works!')
+          except Exception as e:
+              print(f'❌ Model loading failed: {e}')
+              exit(1)
+          "
+        shell: bash
+        env:
+          HF_HUB_DISABLE_PROGRESS_BARS: 1

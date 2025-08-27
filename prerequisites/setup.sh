@@ -47,18 +47,19 @@ Model Fine-Tuning Workshop - Linux/macOS Setup Script
 
 This script will:
 1. Install Python 3.11 (if not present)
-2. Install VS Code (if not present)
+2. Install VS Code (if not present)  
 3. Create a Python virtual environment
 4. Install all workshop dependencies
 
 Usage:
-    ./setup-linux.sh
+    ./setup.sh
 
 Requirements:
 - Linux or macOS
 - Internet connection
 - 3GB+ free disk space
 - sudo privileges for package installation
+- For macOS: Xcode command line tools (will be installed automatically)
 
 For support: Copy ALL output if errors occur
 EOF
@@ -123,6 +124,21 @@ print_info "Available disk space: $(df -h . | tail -1 | awk '{print $4}')"
 
 OS=$(detect_os)
 print_info "Detected OS: $OS"
+
+# Check for macOS build tools
+if [ "$OS" = "macos" ]; then
+    print_step "Checking macOS Build Tools"
+    if ! xcode-select -p >/dev/null 2>&1; then
+        print_warning "Xcode command line tools not installed"
+        print_info "Installing Xcode command line tools (required for building Python packages)..."
+        xcode-select --install
+        print_info "Please complete the Xcode installation dialog and then re-run this script"
+        print_info "Note: This may take several minutes to install"
+        exit 1
+    else
+        print_success "Xcode command line tools are installed"
+    fi
+fi
 
 # Check Python installation
 print_step "Checking Python Installation"
@@ -194,6 +210,7 @@ if [ -z "$PYTHON_CMD" ]; then
                 print_support "Or manually install Python from https://python.org/downloads/"
                 exit 1
             fi
+            
             brew install python@3.11
             if command_exists python3.11; then
                 PYTHON_CMD="python3.11"
@@ -327,26 +344,37 @@ print_info "Please be patient and do not close this terminal..."
 print_info "Upgrading pip..."
 python -m pip install --upgrade pip
 
-# Install requirements
-print_info "Installing workshop packages from requirements.txt..."
+# Install requirements - choose appropriate file based on OS
+print_info "Installing workshop packages from requirements file..."
 print_info "Progress will be shown below (this may take several minutes):"
 
-if [ -f "prerequisites/requirements.txt" ]; then
-    if pip install -r prerequisites/requirements.txt; then
-        print_success "All workshop dependencies installed successfully"
-    else
-        print_error "Failed to install workshop dependencies"
-        print_support "IMPORTANT: Copy the above pip output and contact workshop organizers"
-        echo ""
-        print_info "Common solutions:"
-        print_info "1. Check internet connection"
-        print_info "2. Install build tools: sudo apt install build-essential (Ubuntu)"
-        print_info "3. Check available disk space (need 3GB+)"
-        exit 1
-    fi
+# Select the appropriate requirements file based on OS
+REQUIREMENTS_FILE=""
+if [ "$OS" = "macos" ] && [ -f "prerequisites/requirements-macos.txt" ]; then
+    REQUIREMENTS_FILE="prerequisites/requirements-macos.txt"
+    print_info "Using macOS-specific requirements file"
+elif [ -f "prerequisites/requirements.txt" ]; then
+    REQUIREMENTS_FILE="prerequisites/requirements.txt"
+    print_info "Using default requirements file"
 else
-    print_error "requirements.txt not found in prerequisites directory"
+    print_error "No suitable requirements file found"
     print_support "Make sure you're running this from the correct workshop folder"
+    exit 1
+fi
+
+print_info "Installing from: $REQUIREMENTS_FILE"
+
+if pip install -r "$REQUIREMENTS_FILE"; then
+    print_success "All workshop dependencies installed successfully"
+else
+    print_error "Failed to install workshop dependencies"
+    print_support "IMPORTANT: Copy the above pip output and contact workshop organizers"
+    echo ""
+    print_info "Common solutions:"
+    print_info "1. Check internet connection"
+    print_info "2. Install build tools: sudo apt install build-essential (Ubuntu)"
+    print_info "3. For macOS: install Xcode command line tools: xcode-select --install"
+    print_info "4. Check available disk space (need 3GB+)"
     exit 1
 fi
 

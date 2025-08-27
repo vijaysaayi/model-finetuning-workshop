@@ -1,0 +1,57 @@
+# macOS/Linux requirements for Model Fine-Tuning Workshop
+# Platform-specific PyTorch installation for macOS and Linux
+
+# ML Core packages - macOS/Linux compatible
+torch>=2.0.0,<3.0.0
+torchvision>=0.15.0,<1.0.0
+torchaudio>=2.0.0,<3.0.0
+transformers>=4.21.0,<5.0.0
+accelerate>=0.21.0,<1.0.0
+datasets>=2.0.0,<5.0.0
+peft>=0.4.0,<1.0.0
+trl>=0.7.0,<1.0.0
+
+# Numerical computing
+numpy>=1.21.0,<2.0.0
+pandas>=1.3.0,<3.0.0
+scipy>=1.7.0,<2.0.0
+matplotlib>=3.5.0,<4.0.0
+scikit-learn>=1.0.0,<2.0.0
+
+# Jupyter ecosystem
+ipykernel>=6.15.0,<7.0.0
+ipython>=7.31.0,<9.0.0
+ipywidgets>=7.6.0,<9.0.0
+jupyter_client>=7.0.0,<9.0.0
+jupyter_core>=4.9.0,<6.0.0
+
+# Utility packages
+tqdm>=4.62.0,<5.0.0
+requests>=2.25.0,<3.0.0
+PyYAML>=5.4.0,<7.0.0
+pillow>=8.3.0,<11.0.0
+tokenizers>=0.13.0,<1.0.0
+safetensors>=0.3.0,<1.0.0
+huggingface-hub>=0.15.0,<1.0.0
+
+# Development and debugging
+debugpy>=1.6.0,<2.0.0
+attrs>=21.4.0,<24.0.0
+
+# System dependencies
+filelock>=3.8.0,<4.0.0
+packaging>=21.0,<25.0
+regex>=2022.7.0,<2025.0.0
+certifi>=2022.12.0
+charset-normalizer>=2.0.0,<4.0.0
+idna>=3.3,<4.0.0
+urllib3>=1.26.0,<3.0.0
+colorama>=0.4.4,<1.0.0
+
+# Async support
+aiohttp>=3.8.0,<4.0.0
+aiosignal>=1.2.0,<2.0.0
+async-timeout>=4.0.0,<5.0.0
+frozenlist>=1.3.0,<2.0.0
+multidict>=6.0.0,<7.0.0
+yarl>=1.7.0,<2.0.0

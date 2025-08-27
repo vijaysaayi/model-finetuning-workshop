@@ -14,6 +14,17 @@ import torch
 import random
 import warnings
 import os
+import sys
+from datasets import Dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
+from trl import SFTTrainer
+from peft import LoraConfig, get_peft_model
+
+import torch
+import random
+import warnings
+import os
+import sys
 from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import SFTTrainer
@@ -33,6 +44,20 @@ def safe_print(text):
         import re
         clean_text = re.sub(r'[^\x00-\x7F]+', '', text)
         print(clean_text)
+
+# Compatibility check for accelerate version
+try:
+    import accelerate
+    accelerate_version = accelerate.__version__
+    safe_print(f"🔧 Accelerate version: {accelerate_version}")
+except ImportError:
+    safe_print("⚠️  Accelerate not found")
+    sys.exit(1)
+
+# Remove emojis and special characters for Windows compatibility
+import re
+clean_text = re.sub(r'[^\x00-\x7F]+', '', text)
+print(clean_text)
 
 # Setup
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
@@ -108,7 +133,21 @@ def quick_test():
     trainer.processing_class = tokenizer
     
     safe_print(f"🎓 Training for {EPOCHS} epochs...")
-    trainer.train()
+    try:
+        trainer.train()
+    except TypeError as e:
+        if "keep_torch_compile" in str(e):
+            safe_print("❌ Compatibility issue detected between transformers and accelerate versions")
+            safe_print("   This is usually caused by version mismatch. Please ensure:")
+            safe_print("   - accelerate >= 1.0.0")
+            safe_print("   - transformers >= 4.21.0")
+            safe_print(f"   Current error: {e}")
+            sys.exit(1)
+        else:
+            raise e
+    except Exception as e:
+        safe_print(f"❌ Training failed with error: {e}")
+        sys.exit(1)
     
     # Test
     safe_print("\n🧪 Testing quick fine-tuned model:")

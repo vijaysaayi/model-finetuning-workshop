@@ -160,6 +160,11 @@ jobs:
           echo "Contents of requirements file:"
           cat ${{ steps.requirements.outputs.file }}
           echo "Starting installation..."
+          # First install PyTorch with explicit CPU support for better compatibility
+          echo "Installing PyTorch with CPU support..."
+          pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+          # Then install other packages
+          echo "Installing remaining packages..."
           pip install -r ${{ steps.requirements.outputs.file }}
         shell: bash
       
@@ -191,9 +196,34 @@ jobs:
           python -c "import datasets; print(f'Datasets: {datasets.__version__}')"
           python -c "import peft; print(f'PEFT: {peft.__version__}')"
           python -c "import trl; print(f'TRL: {trl.__version__}')"
+          python -c "import accelerate; print(f'Accelerate: {accelerate.__version__}')"
           echo "All key packages imported successfully!"
         shell: bash
       
+      - name: Check package compatibility (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "Checking package compatibility for macOS..."
+          python -c "
+          import transformers
+          import accelerate
+          import packaging.version as pv
+          
+          trans_ver = transformers.__version__
+          accel_ver = accelerate.__version__
+          
+          print(f'Transformers version: {trans_ver}')
+          print(f'Accelerate version: {accel_ver}')
+          
+          # Check if accelerate version is compatible
+          if pv.parse(accel_ver) < pv.parse('1.0.0'):
+              print('❌ WARNING: accelerate version may be incompatible with newer transformers')
+              print('   This may cause \"keep_torch_compile\" errors')
+          else:
+              print('✅ Package versions appear compatible')
+          "
+        shell: bash
+        
       - name: Test Unicode/Emoji handling
         run: python validation/test_unicode.py
         env:
@@ -214,8 +244,12 @@ jobs:
           PYTORCH_ENABLE_MPS_FALLBACK: "1"
           # Force CPU-only mode for CI to avoid memory issues
           CUDA_VISIBLE_DEVICES: ""
+          # Disable MPS (Metal Performance Shaders) on macOS for CI
+          PYTORCH_ENABLE_MPS: "0"
           # Additional memory management for all platforms
           OMP_NUM_THREADS: "1"
+          # Accelerate configuration for better macOS compatibility
+          ACCELERATE_TORCH_DEVICE: "cpu"
       
       - name: Display installed packages (for debugging)
         if: always()

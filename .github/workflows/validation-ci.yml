@@ -1,18 +1,6 @@
 name: Model Fine-tuning Validation CI
 
 on:
-  push:
-    branches: [ main, develop ]
-    paths:
-      - 'validation/**'
-      - 'prerequisites/**'
-      - '.github/workflows/validation-ci.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'validation/**'
-      - 'prerequisites/**'
-      - '.github/workflows/validation-ci.yml'
   workflow_dispatch:
     inputs:
       python_versions:

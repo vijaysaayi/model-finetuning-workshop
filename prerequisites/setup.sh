@@ -2,6 +2,10 @@
 
 # Model Fine-Tuning Workshop - Linux/macOS Setup
 # This script installs all prerequisites and sets up the environment
+# 
+# For macOS users: This script will install Python 3.11 specifically for optimal
+# PyTorch and ML library compatibility, even if you have other Python versions.
+# Python 3.11 is the recommended version for this workshop to avoid compatibility issues.
 
 set -e  # Exit on any error
 
@@ -143,39 +147,51 @@ fi
 # Check Python installation
 print_step "Checking Python Installation"
 
-# Find the best Python command
-PYTHON_CMD=""
-if command_exists python3; then
-    PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2)
-    PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
-    PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
-    
-    if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
-        PYTHON_CMD="python3"
-        print_success "Python3 found: $PYTHON_VERSION"
+# For macOS, we always want to use Python 3.11 for ML compatibility
+if [ "$OS" = "macos" ]; then
+    # On macOS, always prefer Python 3.11 for ML compatibility
+    if command_exists python3.11; then
+        PYTHON_CMD="python3.11"
+        PYTHON_VERSION=$(python3.11 --version 2>&1 | cut -d' ' -f2)
+        print_success "Python 3.11 found: $PYTHON_VERSION (optimal for ML)"
     else
-        print_warning "Python3 version too old: $PYTHON_VERSION (need 3.8+)"
+        print_info "Python 3.11 not found - will install for optimal ML compatibility"
+        PYTHON_CMD=""
     fi
-elif command_exists python; then
-    PYTHON_VERSION=$(python --version 2>&1 | cut -d' ' -f2)
-    PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
-    PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
-    
-    if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
-        PYTHON_CMD="python"
-        print_success "Python found: $PYTHON_VERSION"
-    else
-        print_warning "Python version too old: $PYTHON_VERSION (need 3.8+)"
+else
+    # For Linux, find the best available Python command
+    PYTHON_CMD=""
+    if command_exists python3; then
+        PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2)
+        PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
+        PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
+        
+        if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
+            PYTHON_CMD="python3"
+            print_success "Python3 found: $PYTHON_VERSION"
+        else
+            print_warning "Python3 version too old: $PYTHON_VERSION (need 3.8+)"
+        fi
+    elif command_exists python; then
+        PYTHON_VERSION=$(python --version 2>&1 | cut -d' ' -f2)
+        PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
+        PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
+        
+        if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
+            PYTHON_CMD="python"
+            print_success "Python found: $PYTHON_VERSION"
+        else
+            print_warning "Python version too old: $PYTHON_VERSION (need 3.8+)"
+        fi
     fi
 fi
 
 # Install Python if needed
 if [ -z "$PYTHON_CMD" ]; then
-    print_info "Installing Python 3.11..."
-    print_info "This may take 2-5 minutes depending on your system..."
-    
     case $OS in
         "ubuntu")
+            print_info "Installing Python 3.11..."
+            print_info "This may take 2-5 minutes depending on your system..."
             print_info "Using apt package manager..."
             sudo apt update
             sudo apt install -y python3.11 python3.11-venv python3.11-pip python3.11-dev
@@ -189,6 +205,8 @@ if [ -z "$PYTHON_CMD" ]; then
             fi
             ;;
         "centos"|"fedora")
+            print_info "Installing Python 3.11..."
+            print_info "This may take 2-5 minutes depending on your system..."
             print_info "Using yum/dnf package manager..."
             if command_exists dnf; then
                 sudo dnf install -y python3.11 python3.11-pip python3.11-devel
@@ -204,19 +222,60 @@ if [ -z "$PYTHON_CMD" ]; then
             fi
             ;;
         "macos")
-            print_info "Installing Python via Homebrew..."
+            print_info "Installing Python 3.11 for optimal ML compatibility..."
+            print_info "This ensures PyTorch and other ML libraries work correctly"
+            print_info "This may take 3-8 minutes depending on your internet connection..."
+            
+            # Check if Homebrew is installed
             if ! command_exists brew; then
-                print_error "Homebrew not found. Please install from https://brew.sh/"
-                print_support "Or manually install Python from https://python.org/downloads/"
+                print_warning "Homebrew not found. Installing Homebrew first..."
+                print_info "Homebrew is the recommended package manager for macOS"
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                
+                # Add Homebrew to PATH
+                if [[ -f "/opt/homebrew/bin/brew" ]]; then
+                    # Apple Silicon Mac
+                    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+                    eval "$(/opt/homebrew/bin/brew shellenv)"
+                elif [[ -f "/usr/local/bin/brew" ]]; then
+                    # Intel Mac
+                    echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.bash_profile
+                    eval "$(/usr/local/bin/brew shellenv)"
+                fi
+                
+                if ! command_exists brew; then
+                    print_error "Homebrew installation failed"
+                    print_support "Please install Homebrew manually from https://brew.sh/"
+                    print_support "Then install Python: brew install python@3.11"
+                    exit 1
+                fi
+            fi
+            
+            print_info "Installing Python 3.11 via Homebrew..."
+            brew install python@3.11
+            
+            # Link python3.11 command
+            if [[ -f "/opt/homebrew/bin/python3.11" ]]; then
+                # Apple Silicon Mac
+                PYTHON_CMD="/opt/homebrew/bin/python3.11"
+            elif [[ -f "/usr/local/bin/python3.11" ]]; then
+                # Intel Mac
+                PYTHON_CMD="/usr/local/bin/python3.11"
+            elif command_exists python3.11; then
+                PYTHON_CMD="python3.11"
+            else
+                print_error "Python 3.11 installation failed"
+                print_support "Try manually: brew install python@3.11"
+                print_support "Or download from: https://python.org/downloads/"
                 exit 1
             fi
             
-            brew install python@3.11
-            if command_exists python3.11; then
-                PYTHON_CMD="python3.11"
+            # Verify installation
+            if $PYTHON_CMD --version >/dev/null 2>&1; then
                 print_success "Python 3.11 installed successfully"
+                print_info "Python 3.11 is optimized for ML workloads and PyTorch compatibility"
             else
-                print_error "Python installation failed"
+                print_error "Python 3.11 verification failed"
                 exit 1
             fi
             ;;
@@ -232,6 +291,16 @@ fi
 print_info "Verifying Python installation..."
 PYTHON_VERSION=$($PYTHON_CMD --version 2>&1)
 print_success "Using: $PYTHON_VERSION"
+
+# For macOS, add additional confirmation about Python 3.11 choice
+if [ "$OS" = "macos" ]; then
+    if [[ "$PYTHON_VERSION" == *"3.11"* ]]; then
+        print_info "✅ Using Python 3.11 - optimal for PyTorch and ML libraries"
+    else
+        print_warning "Not using Python 3.11 - you may encounter compatibility issues"
+        print_info "For best results, consider installing Python 3.11: brew install python@3.11"
+    fi
+fi
 
 # Check VS Code installation
 print_step "Checking VS Code Installation"
@@ -500,14 +569,25 @@ if [ ! -d ".vscode" ]; then
 fi
 
 # Create settings.json for optimal VS Code experience
+# Determine the correct Python interpreter path
+VENV_PYTHON_PATH="\${workspaceFolder}/.venv/bin/python"
+
+# For macOS with Homebrew Python 3.11, ensure correct path
+if [ "$OS" = "macos" ] && [[ "$PYTHON_CMD" == *"python3.11"* ]]; then
+    # Use the virtual environment Python which will be based on Python 3.11
+    VENV_PYTHON_PATH="\${workspaceFolder}/.venv/bin/python"
+fi
+
 cat > .vscode/settings.json << EOF
 {
-  "python.defaultInterpreterPath": "\${workspaceFolder}/.venv/bin/python",
+  "python.defaultInterpreterPath": "$VENV_PYTHON_PATH",
   "jupyter.jupyterServerType": "local",
   "python.terminal.activateEnvironment": true,
   "jupyter.defaultKernel": ".venv",
   "python.linting.enabled": false,
-  "python.formatting.provider": "none"
+  "python.formatting.provider": "none",
+  "python.analysis.autoImportCompletions": true,
+  "jupyter.interactiveWindow.textEditor.executeSelection": true
 }
 EOF
 
@@ -527,13 +607,17 @@ if [ ${#failed_packages[@]} -eq 0 ]; then
 
 ${GREEN}*** SUCCESS! Your workshop environment is ready. ***${NC}
 
-[+] Python 3.8+ installed
+[+] Python 3.11 installed and configured for ML compatibility
 [+] VS Code installed  
-[+] Virtual environment created
+[+] Virtual environment created with Python 3.11
 [+] All workshop packages installed
 [+] Qwen2-0.5B model pre-downloaded and cached
 [+] Jupyter kernel registered for VS Code
 [+] VS Code workspace configured
+
+Python Version: $($PYTHON_CMD --version)
+Environment location: $WORKSHOP_DIR/.venv
+Total download: ~3GB (packages + model)
 
 To start the workshop:
 1. Open VS Code
@@ -542,10 +626,8 @@ To start the workshop:
 4. Open the model-finetune-handon.ipynb notebook
 5. VS Code should automatically use the "Workshop Environment" kernel
 
-Environment location: $WORKSHOP_DIR/.venv
-Total download: ~3GB (packages + model)
-
-NOTE: The model is now cached locally - loading will be instant during the workshop!
+NOTE: Using Python 3.11 ensures optimal PyTorch compatibility and avoids version conflicts!
+The model is now cached locally - loading will be instant during the workshop!
 EOF
 else
     cat << EOF

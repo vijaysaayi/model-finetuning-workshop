@@ -1,15 +1,16 @@
-# macOS/Linux requirements for Model Fine-Tuning Workshop
-# Platform-specific PyTorch installation for macOS and Linux
+# macOS requirements for Model Fine-Tuning Workshop (Python 3.11 optimized)
+# This file is specifically optimized for Python 3.11 on macOS for maximum ML compatibility
 
-# ML Core packages - macOS/Linux compatible
-torch>=2.0.0,<3.0.0
-torchvision>=0.15.0,<1.0.0
-torchaudio>=2.0.0,<3.0.0
-transformers>=4.21.0,<5.0.0
-accelerate==1.9.0
-datasets>=2.0.0,<5.0.0
-peft>=0.4.0,<1.0.0
-trl>=0.7.0,<1.0.0
+# ML Core packages - Python 3.11 compatible versions
+# Using specific PyTorch versions that are known to work with Python 3.11
+torch>=2.1.0,<2.5.0
+torchvision>=0.16.0,<0.20.0
+torchaudio>=2.1.0,<2.5.0
+transformers>=4.35.0,<5.0.0
+accelerate>=0.24.0,<1.0.0
+datasets>=2.14.0,<3.0.0
+peft>=0.6.0,<1.0.0
+trl>=0.7.4,<1.0.0
 
 # Numerical computing
 numpy>=1.21.0,<2.0.0

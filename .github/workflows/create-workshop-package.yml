@@ -63,83 +63,20 @@ jobs:
         echo "..."
         echo "Total files: $(find workshop-package -type f | wc -l)"
     
-    - name: Create README for workshop package
-      run: |
-        cat > workshop-package/WORKSHOP-README.md << 'EOF'
-        # Model Fine-Tuning Workshop Package
-        
-        This is a packaged version of the Model Fine-Tuning Workshop materials.
-        
-        ## Quick Start
-        
-        ### Windows Users
-        1. Extract this ZIP file to your desired location
-        2. Open PowerShell as Administrator
-        3. Navigate to the workshop folder
-        4. Run: `.\prerequisites\setup.ps1`
-        5. Follow the setup instructions
-        
-        ### System Requirements
-        - Windows 10/11 (x64 or ARM64)
-        - At least 8GB RAM (16GB recommended)
-        - 5GB free disk space
-        - Stable internet connection for initial setup
-        
-        ### What's Included
-        - Complete workshop materials
-        - Setup scripts for automated environment configuration
-        - Jupyter notebooks for hands-on learning
-        - Prerequisites and requirements files
-        
-        ### Architecture Support
-        - **ARM64 devices** (Surface Pro X, etc.): Optimized with PyTorch ARM native builds
-        - **x64 devices**: Standard PyTorch installation
-        
-        The setup script automatically detects your system architecture and installs the appropriate version.
-        
-        ## Workshop Structure
-        
-        ```
-        workshop/                 # Main workshop notebook
-        prerequisites/            # Setup scripts and requirements
-        fine-tuned-qwen-0.5b/    # Pre-trained model artifacts
-        output/                   # Training output examples
-        ```
-        
-        ## Support
-        
-        If you encounter issues during setup:
-        1. Copy the complete PowerShell output
-        2. Note your system architecture (x64/ARM64)
-        3. Contact the workshop organizers
-        
-        ## Package Information
-        
-        - Package created: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        - Git commit: ${{ github.sha }}
-        - Package name: ${{ steps.vars.outputs.package_name }}
-        
-        ---
-        
-        Happy learning! 🚀
-        EOF
-    
     - name: Create ZIP package
       run: |
+        # Create the zip file with maximum compression directly from workshop-package contents
         cd workshop-package
-        
-        # Create the zip file with maximum compression
         zip -9 -r "../${{ steps.vars.outputs.zip_filename }}" . \
           -x "*.DS_Store" "*.git*" "__pycache__/*" "*.pyc" "*.pyo" "*.pyd" \
              ".venv/*" "node_modules/*" "*.log" "*.tmp"
-        
         cd ..
         
         # Verify the zip file
         echo "ZIP file created: ${{ steps.vars.outputs.zip_filename }}"
         ls -lh "${{ steps.vars.outputs.zip_filename }}"
         
-        # Show zip contents summary
+        # Show zip contents summary (files will be at root level when extracted)
         echo "ZIP contents summary:"
         unzip -l "${{ steps.vars.outputs.zip_filename }}" | head -20
         echo "..."

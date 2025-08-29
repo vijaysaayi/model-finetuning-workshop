@@ -101,37 +101,6 @@ chmod +x prerequisites/setup.sh
 sudo ./prerequisites/setup.sh
 ```
 
-#### Issue: General setup failure
-
-**Solutions to try**:
-
-- Check internet connection (required for downloads)
-- Ensure you have at least 3GB of free disk space
-- Restart your computer and try again
-- Check Windows Defender or antivirus isn't blocking the installation
-
-> **💡 Tip**: If you encounter issues, please share the complete error output for faster troubleshooting assistance.
-
-## 📊 Expected Results
-
-After completing the workshop, you should observe:
-
-- **Base Model**: Generic responses that may not be specific to Axiomcart
-- **Fine-Tuned Model**: Responses that are:
-  - More specific to Axiomcart's policies and procedures
-  - Consistent with the company's tone and style
-  - More helpful for customer service scenarios
-
-## 🎓 Learning Outcomes
-
-By the end of this workshop, you will have:
-
-- ✅ Successfully fine-tuned a language model using LoRA
-- ✅ Understanding of the fine-tuning process and its parameters
-- ✅ Experience with modern ML tools (Transformers, PEFT, TRL)
-- ✅ A working custom AI assistant for customer support
-- ✅ Knowledge of how to evaluate model performance before and after fine-tuning
-
 ## 📚 Additional Resources
 
 - [Hugging Face Transformers Documentation](https://huggingface.co/docs/transformers)
